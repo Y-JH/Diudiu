@@ -1,0 +1,21 @@
+http://gank.io/api/xiandu/categories
+GET
+1
+Accept-Encoding: gzip
+HTTP/1.1 200 OK
+15
+Server: Tengine
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Vary: Accept-Encoding
+Date: Tue, 19 Jun 2018 05:57:47 GMT
+Via: cache4.l2nu20-2[79,200-0,M], cache3.l2nu20-2[80,0], kunlun1.cn36[89,200-0,M], kunlun4.cn36[90,0]
+X-Cache: MISS TCP_MISS dirn:-2:-2 mlen:-1
+X-Swift-SaveTime: Tue, 19 Jun 2018 05:57:47 GMT
+X-Swift-CacheTime: 0
+Timing-Allow-Origin: *
+EagleId: 3c1ce20415293878673415052e
+Content-Encoding: gzip
+OkHttp-Sent-Millis: 1529387867351
+OkHttp-Received-Millis: 1529387867505
