@@ -1,4 +1,4 @@
-package com.dalimao.mytaxi.splash;/*
+package com.dalimao.mytaxi.splash.splash;/*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ public class InstallCert {
             String p = (args.length == 1) ? "changeit" : args[1];
             passphrase = p.toCharArray();
         } else {
-            System.out.println("Usage: java com.dalimao.mytaxi.splash.InstallCert <host>[:port] [passphrase]");
+            System.out.println("Usage: java com.dalimao.mytaxi.splash.splash.InstallCert <host>[:port] [passphrase]");
             return;
         }
         File file = new File("jssecacerts");

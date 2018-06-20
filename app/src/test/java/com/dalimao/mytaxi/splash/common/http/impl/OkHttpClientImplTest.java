@@ -1,9 +1,9 @@
-package com.dalimao.mytaxi.splash.http.impl;
+package com.dalimao.mytaxi.splash.common.http.impl;
 
-import com.dalimao.mytaxi.splash.http.IHttpClient;
-import com.dalimao.mytaxi.splash.http.IRequest;
-import com.dalimao.mytaxi.splash.http.IResponse;
-import com.dalimao.mytaxi.splash.http.api.API;
+import com.dalimao.mytaxi.splash.common.http.IHttpClient;
+import com.dalimao.mytaxi.splash.common.http.IRequest;
+import com.dalimao.mytaxi.splash.common.http.IResponse;
+import com.dalimao.mytaxi.splash.common.http.api.API;
 
 import org.junit.Before;
 import org.junit.Test;

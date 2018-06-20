@@ -1,6 +1,6 @@
-package com.dalimao.mytaxi.splash.http.impl;
+package com.dalimao.mytaxi.splash.common.http.impl;
 
-import com.dalimao.mytaxi.splash.http.IResponse;
+import com.dalimao.mytaxi.splash.common.http.IResponse;
 
 /**
  * @Title:BaseResponse
@@ -13,6 +13,7 @@ import com.dalimao.mytaxi.splash.http.IResponse;
 public class BaseResponse implements IResponse {
 
     public static final int STATE_UNKNOWN_ERROR = 10001;
+    public static final int STATE_OK = 200;
     private int code;
     private String data;
 
