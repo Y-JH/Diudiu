@@ -1,4 +1,4 @@
-package com.dalimao.mytaxi.splash.account.response;
+package com.dalimao.mytaxi.splash.account.module;
 
 /**
  * @Title:Account

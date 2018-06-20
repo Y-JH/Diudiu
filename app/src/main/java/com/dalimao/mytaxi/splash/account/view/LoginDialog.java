@@ -1,11 +1,8 @@
-package com.dalimao.mytaxi.splash.account;
+package com.dalimao.mytaxi.splash.account.view;
 
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -14,22 +11,13 @@ import android.widget.TextView;
 
 import com.dalimao.mytaxi.R;
 import com.dalimao.mytaxi.splash.MyTaxiApplication;
-import com.dalimao.mytaxi.splash.account.response.Account;
-import com.dalimao.mytaxi.splash.account.response.LoginResponse;
-import com.dalimao.mytaxi.splash.common.http.IHttpClient;
-import com.dalimao.mytaxi.splash.common.http.IRequest;
-import com.dalimao.mytaxi.splash.common.http.IResponse;
-import com.dalimao.mytaxi.splash.common.http.api.API;
-import com.dalimao.mytaxi.splash.common.http.biz.BaseBizResponse;
-import com.dalimao.mytaxi.splash.common.http.impl.BaseRequest;
-import com.dalimao.mytaxi.splash.common.http.impl.BaseResponse;
+import com.dalimao.mytaxi.splash.account.module.AccountManagerImpl;
+import com.dalimao.mytaxi.splash.account.module.IAccountManager;
+import com.dalimao.mytaxi.splash.account.presenter.ILoginDialogPresenter;
+import com.dalimao.mytaxi.splash.account.presenter.LoginDialogPresenter;
 import com.dalimao.mytaxi.splash.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.splash.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.splash.common.util.ToastUtil;
-import com.google.gson.Gson;
-
-import java.lang.ref.SoftReference;
-
 
 
 /**
@@ -41,59 +29,23 @@ import java.lang.ref.SoftReference;
  * @Date:2018/6/2011:36
  */
 
-public class LoginDialog extends Dialog{
-
+public class LoginDialog extends Dialog implements ILoginDialogView{
 
     private static final String TAG = "LoginDialog";
-    private static final int LOGIN_SUC = 1;
-    private static final int SERVER_FAIL = 2;
-    private static final int PW_ERR = 4;
     private TextView mPhone;
     private EditText mPw;
     private Button mBtnConfirm;
     private View mLoading;
     private TextView mTips;
     private String mPhoneStr;
-    private IHttpClient mHttpClient;
-    private MyHandler mHandler;
+    private ILoginDialogPresenter iLoginDialogPresenter;
 
-    /**
-     * 接收子线程消息的 Handler
-     */
-    static class MyHandler extends Handler {
-
-        // 软引用
-        SoftReference<LoginDialog> dialogRef;
-        public MyHandler(LoginDialog dialog) {
-            dialogRef = new SoftReference<LoginDialog>(dialog);
-        }
-        @Override
-        public void handleMessage(Message msg) {
-            LoginDialog dialog = dialogRef.get();
-            if (dialog == null) {
-                return;
-            }
-            // 处理UI 变化
-            switch (msg.what) {
-
-                case LOGIN_SUC:
-                    dialog.showLoginSuc();
-                    break;
-                case PW_ERR:
-                    dialog.showPasswordError();
-                    break;
-                case SERVER_FAIL:
-                    dialog.showServerError();
-                    break;
-            }
-
-        }
-    }
     public LoginDialog(Context context, String phone) {
         this(context, R.style.Dialog);
         mPhoneStr = phone;
-        mHttpClient = new OkHttpClientImpl();
-        mHandler = new MyHandler(this);
+        iLoginDialogPresenter = new LoginDialogPresenter(new AccountManagerImpl(new OkHttpClientImpl(),
+                new SharedPreferencesDao(MyTaxiApplication.getInstance(),SharedPreferencesDao.FILE_ACCOUNT)),
+                this);
     }
 
     public LoginDialog(Context context, int theme) {
@@ -153,43 +105,7 @@ public class LoginDialog extends Dialog{
         String password = mPw.getText().toString();
 
         //  网络请求登录
-        new Thread() {
-            @Override
-            public void run() {
-                String url = API.Config.getDomain() + API.LOGIN;
-                IRequest request = new BaseRequest(url);
-                request.setBody("phone", mPhoneStr);
-                String password = mPw.getText().toString();
-                request.setBody("password", password);
-
-
-                IResponse response = mHttpClient.post(request, false);
-                Log.d(TAG, response.getData());
-                if (response.getCode() == BaseResponse.STATE_OK) {
-                    LoginResponse bizRes =
-                            new Gson().fromJson(response.getData(), LoginResponse.class);
-                    if (bizRes.getCode() == BaseBizResponse.STATE_OK) {
-                        // 保存登录信息
-                        Account account = bizRes.getData();
-                        // todo: 加密存储
-                        SharedPreferencesDao dao =
-                                new SharedPreferencesDao(MyTaxiApplication.getInstance(),
-                                        SharedPreferencesDao.FILE_ACCOUNT);
-                        dao.save(SharedPreferencesDao.KEY_ACCOUNT, account);
-
-                        // 通知 UI
-                        mHandler.sendEmptyMessage(LOGIN_SUC);
-                    } if(bizRes.getCode() == BaseBizResponse.STATE_PW_ERR) {
-                        mHandler.sendEmptyMessage(PW_ERR);
-                    } else  {
-                        mHandler.sendEmptyMessage(SERVER_FAIL);
-                    }
-                } else {
-                    mHandler.sendEmptyMessage(SERVER_FAIL);
-                }
-
-            }
-        }.start();
+        iLoginDialogPresenter.requestLogin(mPhoneStr, password);
     }
 
 
@@ -227,7 +143,7 @@ public class LoginDialog extends Dialog{
      */
 
     public void showServerError() {
-        showOrHideLoading(false);
+        hideLoading();
         mTips.setVisibility(View.VISIBLE);
         mTips.setTextColor(getContext().getResources().getColor(R.color.error_red));
         mTips.setText(getContext().getString(R.string.error_server));
@@ -238,10 +154,39 @@ public class LoginDialog extends Dialog{
      * 密码错误
       */
     public void showPasswordError() {
-        showOrHideLoading(false);
+        hideLoading();
         mTips.setVisibility(View.VISIBLE);
         mTips.setTextColor(getContext().getResources().getColor(R.color.error_red));
         mTips.setText(getContext().getString(R.string.password_error));
     }
 
+    @Override
+    public void showLoading() {
+        showOrHideLoading(true);
+    }
+
+    @Override
+    public void hideLoading() {
+        showOrHideLoading(false);
+    }
+
+    @Override
+    public void showError(int code, String msg) {
+        hideLoading();
+
+        switch (code){
+            case IAccountManager.SERVER_FAIL:
+                showServerError();
+                break;
+
+            case IAccountManager.LOGIN_FAIL:
+                ToastUtil.show(getContext(), getContext().getString(R.string.login_fail));
+                break;
+
+            case IAccountManager.PW_ERR:
+                //提示验证码错误
+                showPasswordError();
+                break;
+        }
+    }
 }

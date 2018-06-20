@@ -25,6 +25,7 @@
     <string name="check_user">正在检查用户</string>
     <string name="register">注册</string>
     <string name="login_suc">登录成功</string>
+    <string name="login_fail">登录失败</string>
     <string name="password_error">密码错误</string>
     <string name="sms_send_fail">服务器异常，验证码未发送成功</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.dalimao.mytaxi.splash.account;
+package com.dalimao.mytaxi.splash.account.view;
 
 import android.app.Dialog;
 import android.content.Context;

@@ -3,24 +3,17 @@ package com.dalimao.mytaxi.splash.main;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.dalimao.mytaxi.R;
 import com.dalimao.mytaxi.splash.MyTaxiApplication;
-import com.dalimao.mytaxi.splash.account.PhoneInputDialog;
-import com.dalimao.mytaxi.splash.account.response.Account;
-import com.dalimao.mytaxi.splash.account.response.LoginResponse;
-import com.dalimao.mytaxi.splash.common.http.IHttpClient;
-import com.dalimao.mytaxi.splash.common.http.IRequest;
-import com.dalimao.mytaxi.splash.common.http.IResponse;
-import com.dalimao.mytaxi.splash.common.http.api.API;
-import com.dalimao.mytaxi.splash.common.http.biz.BaseBizResponse;
-import com.dalimao.mytaxi.splash.common.http.impl.BaseRequest;
-import com.dalimao.mytaxi.splash.common.http.impl.BaseResponse;
+import com.dalimao.mytaxi.splash.account.module.AccountManagerImpl;
+import com.dalimao.mytaxi.splash.account.module.IAccountManager;
+import com.dalimao.mytaxi.splash.account.presenter.IMainActivityPresenter;
+import com.dalimao.mytaxi.splash.account.presenter.MainActivityPresenter;
+import com.dalimao.mytaxi.splash.account.view.PhoneInputDialog;
 import com.dalimao.mytaxi.splash.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.splash.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.splash.common.util.ToastUtil;
-import com.google.gson.Gson;
 
 /**
  *
@@ -31,108 +24,48 @@ import com.google.gson.Gson;
  * todo : 地图初始化
  */
 
-public class MainActivity extends AppCompatActivity {
-    private final static String TAG = "MainActivity";
-    private IHttpClient mHttpClient;
+public class MainActivity extends AppCompatActivity implements IMainActivityView{
+    private final static String TAG = "MainActivityPresenter";
+    private IMainActivityPresenter iMainActivityPresenter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mHttpClient = new OkHttpClientImpl();
-        checkLoginState();
+        iMainActivityPresenter = new MainActivityPresenter(new AccountManagerImpl(new OkHttpClientImpl(),
+                new SharedPreferencesDao(MyTaxiApplication.getInstance(),SharedPreferencesDao.FILE_ACCOUNT)),
+                this);
+
+        //检查用户是否登录
+        iMainActivityPresenter.checkLoginState();
     }
-
-    /**
-     * 检查用户是否登录
-     */
-    private void checkLoginState() {
-
-        // 获取本地登录信息
-
-        SharedPreferencesDao dao =
-                new SharedPreferencesDao(MyTaxiApplication.getInstance(),
-                        SharedPreferencesDao.FILE_ACCOUNT);
-        final Account account =
-                (Account) dao.get(SharedPreferencesDao.KEY_ACCOUNT, Account.class);
-
-
-        // 登录是否过期
-        boolean tokenValid = false;
-
-        // 检查token是否过期
-
-        if (account != null) {
-            if (account.getExpired() > System.currentTimeMillis()) {
-                // token 有效
-                tokenValid = true;
-            }
-        }
-
-
-        if (!tokenValid) {
-            showPhoneInputDialog();
-        } else {
-            // 请求网络，完成自动登录
-            new Thread() {
-                @Override
-                public void run() {
-                    String url = API.Config.getDomain() + API.LOGIN_BY_TOKEN;
-                    IRequest request = new BaseRequest(url);
-                    request.setBody("token", account.getToken());
-                    IResponse response = mHttpClient.post(request, false);
-                    Log.d(TAG, response.getData());
-                    if (response.getCode() == BaseResponse.STATE_OK) {
-                        LoginResponse bizRes =
-                                new Gson().fromJson(response.getData(), LoginResponse.class);
-                        if (bizRes.getCode() == BaseBizResponse.STATE_OK) {
-                            // 保存登录信息
-                            Account account = bizRes.getData();
-                            // todo: 加密存储
-                            SharedPreferencesDao dao =
-                                    new SharedPreferencesDao(MyTaxiApplication.getInstance(),
-                                            SharedPreferencesDao.FILE_ACCOUNT);
-                            dao.save(SharedPreferencesDao.KEY_ACCOUNT, account);
-
-                            // 通知 UI
-                            MainActivity.this.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    ToastUtil.show(MainActivity.this,
-                                            getString(R.string.login_suc));
-                                }
-                            });
-                        }
-                        if (bizRes.getCode() == BaseBizResponse.STATE_TOKEN_INVALID) {
-                            MainActivity.this.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    showPhoneInputDialog();
-                                }
-                            });
-                        }
-                    } else {
-                        MainActivity.this.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                ToastUtil.show(MainActivity.this,
-                                        getString(R.string.error_server));
-                            }
-                        });
-                    }
-
-                }
-            }.start();
-        }
-
-    }
-
     /**
      * 显示手机输入框
      */
-    private void showPhoneInputDialog() {
+    @Override
+    public void showPhoneInputDialog() {
         PhoneInputDialog dialog = new PhoneInputDialog(this);
         dialog.show();
+    }
+
+    @Override
+    public void showError(int code, String msg) {
+        switch (code){
+            case IAccountManager.TOKEN_INVALID:
+                showPhoneInputDialog();
+                break;
+
+            case IAccountManager.LOGIN_FAIL:
+                ToastUtil.show(MainActivity.this,
+                        getString(R.string.error_server));
+                break;
+        }
+    }
+
+    @Override
+    public void showLoginSucc() {
+        ToastUtil.show(MainActivity.this,
+                getString(R.string.login_suc));
     }
 
 }
