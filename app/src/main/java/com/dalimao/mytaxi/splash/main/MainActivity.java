@@ -11,6 +11,7 @@ import com.dalimao.mytaxi.splash.account.module.IAccountManager;
 import com.dalimao.mytaxi.splash.account.presenter.IMainActivityPresenter;
 import com.dalimao.mytaxi.splash.account.presenter.MainActivityPresenter;
 import com.dalimao.mytaxi.splash.account.view.PhoneInputDialog;
+import com.dalimao.mytaxi.splash.common.eventbus.RxBus;
 import com.dalimao.mytaxi.splash.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.splash.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.splash.common.util.ToastUtil;
@@ -36,9 +37,17 @@ public class MainActivity extends AppCompatActivity implements IMainActivityView
                 new SharedPreferencesDao(MyTaxiApplication.getInstance(),SharedPreferencesDao.FILE_ACCOUNT)),
                 this);
 
+        RxBus.getInstance().register(iMainActivityPresenter);
         //检查用户是否登录
         iMainActivityPresenter.checkLoginState();
     }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        RxBus.getInstance().unRegister(iMainActivityPresenter);
+    }
+
     /**
      * 显示手机输入框
      */
@@ -58,6 +67,11 @@ public class MainActivity extends AppCompatActivity implements IMainActivityView
             case IAccountManager.LOGIN_FAIL:
                 ToastUtil.show(MainActivity.this,
                         getString(R.string.error_server));
+                break;
+
+            case IAccountManager.PW_ERR:
+                ToastUtil.show(MainActivity.this,
+                        getString(R.string.password_error));
                 break;
         }
     }

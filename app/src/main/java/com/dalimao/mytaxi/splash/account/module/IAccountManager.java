@@ -44,7 +44,10 @@ public interface IAccountManager {
 
     //登录
     void login(String phone, String password);
+    //注册之后请求的登录方法
+    void registerToLogin(String phone, String password);
 
     //通过token登录
     void loginByToken();
+
 }

@@ -15,6 +15,7 @@ import com.dalimao.mytaxi.splash.account.module.AccountManagerImpl;
 import com.dalimao.mytaxi.splash.account.module.IAccountManager;
 import com.dalimao.mytaxi.splash.account.presenter.ILoginDialogPresenter;
 import com.dalimao.mytaxi.splash.account.presenter.LoginDialogPresenter;
+import com.dalimao.mytaxi.splash.common.eventbus.RxBus;
 import com.dalimao.mytaxi.splash.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.splash.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.splash.common.util.ToastUtil;
@@ -29,7 +30,7 @@ import com.dalimao.mytaxi.splash.common.util.ToastUtil;
  * @Date:2018/6/2011:36
  */
 
-public class LoginDialog extends Dialog implements ILoginDialogView{
+public class LoginDialog extends Dialog implements ILoginDialogView {
 
     private static final String TAG = "LoginDialog";
     private TextView mPhone;
@@ -44,8 +45,15 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
         this(context, R.style.Dialog);
         mPhoneStr = phone;
         iLoginDialogPresenter = new LoginDialogPresenter(new AccountManagerImpl(new OkHttpClientImpl(),
-                new SharedPreferencesDao(MyTaxiApplication.getInstance(),SharedPreferencesDao.FILE_ACCOUNT)),
+                new SharedPreferencesDao(MyTaxiApplication.getInstance(), SharedPreferencesDao.FILE_ACCOUNT)),
                 this);
+        RxBus.getInstance().register(iLoginDialogPresenter);//注册 Presenter
+    }
+
+    @Override
+    public void dismiss() {
+        super.dismiss();
+        RxBus.getInstance().unRegister(iLoginDialogPresenter);//解注册 Presenter
     }
 
     public LoginDialog(Context context, int theme) {
@@ -66,12 +74,6 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
         View root = inflater.inflate(R.layout.dialog_login_input, null);
         setContentView(root);
         initViews();
-
-    }
-
-    @Override
-    public void dismiss() {
-        super.dismiss();
 
     }
 
@@ -101,7 +103,6 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
      * 提交登录
      */
     private void submit() {
-
         String password = mPw.getText().toString();
 
         //  网络请求登录
@@ -111,6 +112,7 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
 
     /**
      * 显示／隐藏 loading
+     *
      * @param show
      */
 
@@ -139,7 +141,7 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
     }
 
     /**
-     *  显示服服务器出错
+     * 显示服服务器出错
      */
 
     public void showServerError() {
@@ -152,7 +154,7 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
 
     /**
      * 密码错误
-      */
+     */
     public void showPasswordError() {
         hideLoading();
         mTips.setVisibility(View.VISIBLE);
@@ -174,7 +176,7 @@ public class LoginDialog extends Dialog implements ILoginDialogView{
     public void showError(int code, String msg) {
         hideLoading();
 
-        switch (code){
+        switch (code) {
             case IAccountManager.SERVER_FAIL:
                 showServerError();
                 break;

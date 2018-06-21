@@ -1,5 +1,7 @@
 package com.dalimao.mytaxi.splash.account.presenter;
 
+import com.dalimao.mytaxi.splash.common.eventbus.IEventBusSubscriber;
+
 /**
  * @Title:ICreatePasswordDialogPresenter
  * @Package:com.dalimao.mytaxi.splash.account.presenter
@@ -10,7 +12,7 @@ package com.dalimao.mytaxi.splash.account.presenter;
  * @Email:yuannunhua@gmail.com
  * @Date:2018/6/2014:16
  */
-public interface ICreatePasswordDialogPresenter {
+public interface ICreatePasswordDialogPresenter extends IEventBusSubscriber {
 
     //密码输入的合法性
     void checkPw(String pw, String pwr);

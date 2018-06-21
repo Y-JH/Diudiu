@@ -1,12 +1,9 @@
 package com.dalimao.mytaxi.splash.account.presenter;
 
-import android.os.Handler;
-import android.os.Message;
-
 import com.dalimao.mytaxi.splash.account.module.IAccountManager;
+import com.dalimao.mytaxi.splash.account.module.RegisterResponse;
 import com.dalimao.mytaxi.splash.account.view.ICreatePasswordDialogView;
-
-import java.lang.ref.WeakReference;
+import com.dalimao.mytaxi.splash.common.eventbus.RxbusCallback;
 
 /**
  * @Title:CreatePasswordDialogPresenter
@@ -26,7 +23,7 @@ public class CreatePasswordDialogPresenter implements ICreatePasswordDialogPrese
                                          ICreatePasswordDialogView iCreatePasswordDialogView){
         this.iAccountManager = iAccountManager;
         this.iCreatePasswordDialogView = iCreatePasswordDialogView;
-        iAccountManager.setHandler(new MyHandler(this));
+
     }
 
     @Override
@@ -41,42 +38,35 @@ public class CreatePasswordDialogPresenter implements ICreatePasswordDialogPrese
 
     @Override
     public void requestLogin(String phone, String pw) {
-        iAccountManager.login(phone, pw);
+        iAccountManager.registerToLogin(phone, pw);
     }
 
 
-
-    //在这里进行消息的接收和处理
-    private static class MyHandler extends Handler {
-
-        WeakReference<CreatePasswordDialogPresenter> refContext;
-        public MyHandler(CreatePasswordDialogPresenter presenter){
-            refContext = new WeakReference<CreatePasswordDialogPresenter>(presenter);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what){
+    @RxbusCallback
+    public void registerCallback(RegisterResponse registerResponse){
+        if(null != registerResponse){
+            switch (registerResponse.getCode()){
                 case IAccountManager.LOGIN_SUC:
-                    refContext.get().iCreatePasswordDialogView.showLoginSuc();
+                    iCreatePasswordDialogView.showLoginSuc();
                     break;
 
                 case IAccountManager.REGISTER_SUC:
-                    refContext.get().iCreatePasswordDialogView.showRegisterSuc();
+                    iCreatePasswordDialogView.showRegisterSuc();
                     break;
 
                 case IAccountManager.LOGIN_FAIL:
-                    refContext.get().iCreatePasswordDialogView.showError(IAccountManager.LOGIN_FAIL, "");
+                    iCreatePasswordDialogView.showError(IAccountManager.LOGIN_FAIL, "");
                     break;
 
                 case IAccountManager.PW_ERR:
-                    refContext.get().iCreatePasswordDialogView.showError(IAccountManager.PW_ERR, "");
+                    iCreatePasswordDialogView.showError(IAccountManager.PW_ERR, "");
                     break;
 
                 case IAccountManager.SERVER_FAIL:
-                    refContext.get().iCreatePasswordDialogView.showError(IAccountManager.SERVER_FAIL, "");
+                    iCreatePasswordDialogView.showError(IAccountManager.SERVER_FAIL, "");
                     break;
             }
         }
     }
+
 }

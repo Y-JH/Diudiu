@@ -16,6 +16,7 @@ import com.dalimao.mytaxi.splash.account.module.AccountManagerImpl;
 import com.dalimao.mytaxi.splash.account.module.IAccountManager;
 import com.dalimao.mytaxi.splash.account.presenter.ISmsCodeDialogPresenter;
 import com.dalimao.mytaxi.splash.account.presenter.SmsCodeDialogPresenter;
+import com.dalimao.mytaxi.splash.common.eventbus.RxBus;
 import com.dalimao.mytaxi.splash.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.splash.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.splash.common.util.ToastUtil;
@@ -100,10 +101,6 @@ public class SmsCodeDialog extends Dialog implements ISmsCodeDialogView {
         mCountDownTimer.cancel();
 
     }
-    @Override
-    public void dismiss() {
-        super.dismiss();
-    }
 
 
     public SmsCodeDialog(Context context, int themeResId) {
@@ -111,6 +108,13 @@ public class SmsCodeDialog extends Dialog implements ISmsCodeDialogView {
         iSmsCodeDialogPresenter = new SmsCodeDialogPresenter(new AccountManagerImpl(new OkHttpClientImpl(),
                 new SharedPreferencesDao(MyTaxiApplication.getInstance(),SharedPreferencesDao.FILE_ACCOUNT)),
                 this);
+        RxBus.getInstance().register(iSmsCodeDialogPresenter);//注册 Presenter
+    }
+
+    @Override
+    public void dismiss() {
+        super.dismiss();
+        RxBus.getInstance().unRegister(iSmsCodeDialogPresenter);//解注册 Presenter
     }
 
     protected SmsCodeDialog(Context context, boolean cancelable, OnCancelListener cancelListener) {

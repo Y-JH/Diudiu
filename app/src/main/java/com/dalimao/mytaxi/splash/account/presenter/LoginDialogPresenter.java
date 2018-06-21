@@ -1,12 +1,9 @@
 package com.dalimao.mytaxi.splash.account.presenter;
 
-import android.os.Handler;
-import android.os.Message;
-
 import com.dalimao.mytaxi.splash.account.module.IAccountManager;
+import com.dalimao.mytaxi.splash.account.module.LoginResponse;
 import com.dalimao.mytaxi.splash.account.view.ILoginDialogView;
-
-import java.lang.ref.WeakReference;
+import com.dalimao.mytaxi.splash.common.eventbus.RxbusCallback;
 
 /**
  * @Title:LoginDialogPresenter
@@ -24,7 +21,6 @@ public class LoginDialogPresenter implements ILoginDialogPresenter {
                                 ILoginDialogView iLoginDialogView){
         this.iAccountManager = iAccountManager;
         this.iLoginDialogView = iLoginDialogView;
-        iAccountManager.setHandler(new MyHandler(this));
     }
     @Override
     public void requestLogin(String phone, String pw) {
@@ -32,34 +28,28 @@ public class LoginDialogPresenter implements ILoginDialogPresenter {
     }
 
 
-
-    //在这里进行消息的接收和处理
-    private static class MyHandler extends Handler {
-
-        WeakReference<LoginDialogPresenter> refContext;
-        public MyHandler(LoginDialogPresenter presenter){
-            refContext = new WeakReference<LoginDialogPresenter>(presenter);
-        }
-
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what){
+    @RxbusCallback
+    public void loginCallback(LoginResponse loginResponse) {
+        if (null != loginResponse) {
+            switch (loginResponse.getCode()){
                 case IAccountManager.LOGIN_SUC:
-                    refContext.get().iLoginDialogView.showLoginSuc();
+                    iLoginDialogView.showLoginSuc();
                     break;
 
                 case IAccountManager.LOGIN_FAIL:
-                    refContext.get().iLoginDialogView.showError(IAccountManager.LOGIN_FAIL, "");
+                    iLoginDialogView.showError(IAccountManager.LOGIN_FAIL, "");
                     break;
 
                 case IAccountManager.PW_ERR:
-                    refContext.get().iLoginDialogView.showError(IAccountManager.PW_ERR, "");
+                    iLoginDialogView.showError(IAccountManager.PW_ERR, "");
                     break;
 
                 case IAccountManager.SERVER_FAIL:
-                    refContext.get().iLoginDialogView.showError(IAccountManager.SERVER_FAIL, "");
+                    iLoginDialogView.showError(IAccountManager.SERVER_FAIL, "");
                     break;
             }
         }
+
     }
+
 }

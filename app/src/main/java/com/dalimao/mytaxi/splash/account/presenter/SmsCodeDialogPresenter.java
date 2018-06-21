@@ -4,8 +4,10 @@ package com.dalimao.mytaxi.splash.account.presenter;
 import android.os.Handler;
 import android.os.Message;
 
+import com.dalimao.mytaxi.splash.account.module.CheckResponse;
 import com.dalimao.mytaxi.splash.account.module.IAccountManager;
 import com.dalimao.mytaxi.splash.account.view.ISmsCodeDialogView;
+import com.dalimao.mytaxi.splash.common.eventbus.RxbusCallback;
 
 import java.lang.ref.WeakReference;
 
@@ -25,7 +27,6 @@ public class SmsCodeDialogPresenter implements ISmsCodeDialogPresenter {
                                   ISmsCodeDialogView iSmsCodeDialogView){
         this.iAccountManager = iAccountManager;
         this.iSmsCodeDialogView = iSmsCodeDialogView;
-        iAccountManager.setHandler(new MyHandler(this));
     }
 
 
@@ -45,7 +46,39 @@ public class SmsCodeDialogPresenter implements ISmsCodeDialogPresenter {
     }
 
 
+    @RxbusCallback
+    public void checkCallback(CheckResponse checkResponse) {
+        if (null != checkResponse) {
+            switch (checkResponse.getCode()){
+                case IAccountManager.SMS_SEND_SUC:
+                    iSmsCodeDialogView.showCountDownTimer();
+                    break;
 
+                case IAccountManager.SMS_SEND_FAIL:
+                    iSmsCodeDialogView.showError(IAccountManager.SMS_SEND_FAIL, "");
+                    break;
+
+                case IAccountManager.SMS_CHECK_SUC:
+                    iSmsCodeDialogView.showSmsCheckCodeState(true);
+                    break;
+
+                case IAccountManager.SMS_CHECK_FAIL:
+                    iSmsCodeDialogView.showError(IAccountManager.SMS_CHECK_FAIL, "");
+                    break;
+
+                case IAccountManager.USER_EXIST:
+                    iSmsCodeDialogView.showUserExit(true);
+                    break;
+
+                case IAccountManager.USER_NOT_EXIST:
+                    iSmsCodeDialogView.showUserExit(false);
+                    break;
+
+
+            }
+        }
+
+    }
 
     //在这里进行消息的接收和处理
     private static class MyHandler extends Handler {
@@ -57,33 +90,7 @@ public class SmsCodeDialogPresenter implements ISmsCodeDialogPresenter {
 
         @Override
         public void handleMessage(Message msg) {
-            switch (msg.what){
-                case IAccountManager.SMS_SEND_SUC:
-                    refContext.get().iSmsCodeDialogView.showCountDownTimer();
-                    break;
 
-                case IAccountManager.SMS_SEND_FAIL:
-                    refContext.get().iSmsCodeDialogView.showError(IAccountManager.SMS_SEND_FAIL, "");
-                    break;
-
-                case IAccountManager.SMS_CHECK_SUC:
-                    refContext.get().iSmsCodeDialogView.showSmsCheckCodeState(true);
-                    break;
-
-                case IAccountManager.SMS_CHECK_FAIL:
-                    refContext.get().iSmsCodeDialogView.showError(IAccountManager.SMS_CHECK_FAIL, "");
-                    break;
-
-                case IAccountManager.USER_EXIST:
-                    refContext.get().iSmsCodeDialogView.showUserExit(true);
-                    break;
-
-                case IAccountManager.USER_NOT_EXIST:
-                    refContext.get().iSmsCodeDialogView.showUserExit(false);
-                    break;
-
-
-            }
         }
     }
 }

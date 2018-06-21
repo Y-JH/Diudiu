@@ -16,6 +16,7 @@ import com.dalimao.mytaxi.splash.account.module.AccountManagerImpl;
 import com.dalimao.mytaxi.splash.account.module.IAccountManager;
 import com.dalimao.mytaxi.splash.account.presenter.CreatePasswordDialogPresenter;
 import com.dalimao.mytaxi.splash.account.presenter.ICreatePasswordDialogPresenter;
+import com.dalimao.mytaxi.splash.common.eventbus.RxBus;
 import com.dalimao.mytaxi.splash.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.splash.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.splash.common.util.ToastUtil;
@@ -80,6 +81,13 @@ public class CreatePasswordDialog extends Dialog implements ICreatePasswordDialo
         iCreatePasswordDialogPresenter = new CreatePasswordDialogPresenter(new AccountManagerImpl(new OkHttpClientImpl(),
                 new SharedPreferencesDao(MyTaxiApplication.getInstance(),SharedPreferencesDao.FILE_ACCOUNT)),
                 this);
+
+        RxBus.getInstance().register(iCreatePasswordDialogPresenter);//注册 Presenter
+    }
+    @Override
+    public void dismiss() {
+        super.dismiss();
+        RxBus.getInstance().unRegister(iCreatePasswordDialogPresenter);//解注册 Presenter
     }
 
     public CreatePasswordDialog(Context context, int theme) {
@@ -127,10 +135,6 @@ public class CreatePasswordDialog extends Dialog implements ICreatePasswordDialo
 
     }
 
-    @Override
-    public void dismiss() {
-        super.dismiss();
-    }
 
     /**
      * 提交注册
