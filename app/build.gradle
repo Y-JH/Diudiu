@@ -4,7 +4,7 @@ android {
     compileSdkVersion 24
     buildToolsVersion '26.0.2'
     defaultConfig {
-        applicationId "com.dalimao.mytaxi"
+        applicationId "com.dalimao.diudiu.go"
         minSdkVersion 19
         targetSdkVersion 24
         versionCode 1
@@ -15,6 +15,23 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    signingConfigs {
+        //在打包时根据打包方式自动加载使用对应签名文件
+        release {
+            storeFile file ("./keystore/ztmanr2018.jks")
+            storePassword "ztman2018"
+            keyAlias "ztman2018"
+            keyPassword "ztman2018"
+        }
+
+        debug {
+            storeFile file ("./keystore/ztman2018.jks")
+            storePassword "ztman2018"
+            keyAlias "ztman2018"
+            keyPassword "ztman2018"
         }
     }
 }
