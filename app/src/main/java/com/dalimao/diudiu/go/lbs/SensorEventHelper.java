@@ -1,4 +1,4 @@
-package com.dalimao.diudiu.go.main;
+package com.dalimao.diudiu.go.lbs;
 
 import android.content.Context;
 import android.hardware.Sensor;
