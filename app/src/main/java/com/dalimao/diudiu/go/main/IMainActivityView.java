@@ -1,5 +1,7 @@
 package com.dalimao.diudiu.go.main;
 
+import com.dalimao.diudiu.go.account.module.NearDriverResponse;
+
 /**
  * @Title:IMainActivityView
  * @Package:com.dalimao.mytaxi.splash.main
@@ -16,4 +18,7 @@ public interface IMainActivityView {
     void showError(int code, String msg);
 
     void showLoginSucc();
+
+    //显示司机列表
+    void showNearDrivers(NearDriverResponse driverResponse);
 }

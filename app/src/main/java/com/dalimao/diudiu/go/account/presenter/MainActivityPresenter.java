@@ -1,9 +1,16 @@
 package com.dalimao.diudiu.go.account.presenter;
 
+import android.util.Log;
+
 import com.dalimao.diudiu.go.account.module.IAccountManager;
 import com.dalimao.diudiu.go.account.module.LoginResponse;
+import com.dalimao.diudiu.go.account.module.NearDriverResponse;
 import com.dalimao.diudiu.go.common.eventbus.RxbusCallback;
+import com.dalimao.diudiu.go.common.http.biz.BaseBizResponse;
+import com.dalimao.diudiu.go.lbs.LocationInfo;
 import com.dalimao.diudiu.go.main.IMainActivityView;
+
+import static android.content.ContentValues.TAG;
 
 /**
  * @Title:MainActivity
@@ -27,6 +34,22 @@ public class MainActivityPresenter implements IMainActivityPresenter {
         iAccountManager.loginByToken();
     }
 
+    /**
+     * 功能：获取附近的司机i朋友
+     * @param locationInfo
+     */
+    @Override
+    public void fetchNearDrivers(LocationInfo locationInfo) {
+        iAccountManager.fetchNearDrivers(locationInfo);
+    }
+    @RxbusCallback
+    public void nearDriversCallback(NearDriverResponse driverResponse){
+            Log.d(TAG, "drivers---2--"+driverResponse.getCode());
+        if(driverResponse.getCode() == BaseBizResponse.STATE_OK){
+            Log.d(TAG, "drivers---3--"+driverResponse.getData().size());
+            iMainActivityView.showNearDrivers(driverResponse);
+        }
+    }
     @RxbusCallback
     public void loginCallback(LoginResponse loginResponse){
         if(null != loginResponse){

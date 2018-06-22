@@ -1,6 +1,7 @@
 package com.dalimao.diudiu.go.account.presenter;
 
 import com.dalimao.diudiu.go.common.eventbus.IEventBusSubscriber;
+import com.dalimao.diudiu.go.lbs.LocationInfo;
 
 /**
  * @Title:IMainActivity
@@ -15,4 +16,6 @@ public interface IMainActivityPresenter extends IEventBusSubscriber{
     //检测用户的登录状态
     void checkLoginState();
 
+    //获取附近的司机i朋友
+    void fetchNearDrivers(LocationInfo locationInfo);
 }

@@ -14,6 +14,7 @@ import com.dalimao.diudiu.go.common.http.api.API;
 import com.dalimao.diudiu.go.common.http.impl.BaseRequest;
 import com.dalimao.diudiu.go.common.http.impl.BaseResponse;
 import com.dalimao.diudiu.go.common.util.DevUtil;
+import com.dalimao.diudiu.go.lbs.LocationInfo;
 import com.google.gson.Gson;
 
 import rx.functions.Func1;
@@ -237,9 +238,9 @@ public class AccountManagerImpl implements IAccountManager {
     }
 
 
-
     /**
      * 功能：注册之后请求的登录方法
+     *
      * @param phone
      * @param password
      */
@@ -347,6 +348,34 @@ public class AccountManagerImpl implements IAccountManager {
         });
 
 
+    }
+
+    /**
+     * 功能：获取附近的司机朋友
+     *
+     * @param locationInfo
+     */
+    @Override
+    public void fetchNearDrivers(final LocationInfo locationInfo) {
+        RxBus.getInstance().chainProcess("", new Func1() {
+            @Override
+            public Object call(Object o) {
+
+                String url = API.Config.getDomain() + API.GET_NEAR_DRIVERS;
+                IRequest request = new BaseRequest(url);
+                request.setBody("latitude", String.valueOf(locationInfo.getLatitude()));
+                request.setBody("longitude", String.valueOf(locationInfo.getLongitude()));
+                IResponse response = mHttpClient.get(request, false);
+                Log.d(TAG, "drivers--"+response.getData());
+
+                NearDriverResponse nearDriverResponse = new NearDriverResponse();
+                if (response.getCode() == BaseResponse.STATE_OK) {
+                    nearDriverResponse = new Gson().fromJson(response.getData(), NearDriverResponse.class);
+
+                }
+                return nearDriverResponse;
+            }
+        });
     }
 
 }

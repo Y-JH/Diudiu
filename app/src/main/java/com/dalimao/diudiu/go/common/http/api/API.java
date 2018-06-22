@@ -27,7 +27,8 @@ public final class API {
     // 检查用户是否存在
     public static String CHECK_USER_EXIST =
             "/f34e28da5816433d/isUserExist?phone=${phone}";
-
+    // 获取附近的司机朋友
+    public static final String GET_NEAR_DRIVERS = "/f34e28da5816433d/getNearDrivers?latitude=${latitude}&longitude=${longitude}";
     /**
      *  配置域名信息
      */

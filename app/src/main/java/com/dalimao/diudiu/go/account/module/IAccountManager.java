@@ -2,6 +2,8 @@ package com.dalimao.diudiu.go.account.module;
 
 import android.os.Handler;
 
+import com.dalimao.diudiu.go.lbs.LocationInfo;
+
 /**
  * @Title:IAccountManager
  * @Package:com.dalimao.mytaxi.splash.account.module
@@ -50,4 +52,6 @@ public interface IAccountManager {
     //通过token登录
     void loginByToken();
 
+    //获取附近的司机朋友
+    void fetchNearDrivers(LocationInfo locationInfo);
 }

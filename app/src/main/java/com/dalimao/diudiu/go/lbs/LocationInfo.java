@@ -9,7 +9,7 @@ package com.dalimao.diudiu.go.lbs;
  * @Date:2018/6/2117:09
  */
 public class LocationInfo {
-    private int id;
+    private String key;
     private String name;
     private double latitude;
     private double longitude;
@@ -18,20 +18,12 @@ public class LocationInfo {
     public LocationInfo() {
     }
 
-    public LocationInfo(int id, String name, double latitude, double longitude, float rotation) {
-        this.id = id;
-        this.name = name;
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.rotation = rotation;
+    public String getKey() {
+        return key;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getName() {
@@ -66,14 +58,4 @@ public class LocationInfo {
         this.rotation = rotation;
     }
 
-    @Override
-    public String toString() {
-        return "LocationInfo{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", latitude=" + latitude +
-                ", longitude=" + longitude +
-                ", rotation=" + rotation +
-                '}';
-    }
 }

@@ -40,7 +40,7 @@ import java.util.Map;
 public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocationListener {
 
     private final String TAG = "GaodeLbsLayerImpl";
-    private static final int KEY_MY_LOCATION = 0x11;
+    private static String KEY_MY_LOCATION = "0x11";
     private static final int STROKE_COLOR = Color.argb(180, 3, 145, 255);
     private static final int FILL_COLOR = Color.argb(10, 0, 0, 180);
     private Context mContext;
@@ -53,7 +53,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     private Marker mLocMarker;
     private SensorEventHelper mSensorHelper;
     private Circle mCircle;
-    private Map<Integer, Marker> markerMap = new HashMap<>();
+    private Map<String, Marker> markerMap = new HashMap<>();
 
     public GaodeLbsLayerImpl(Context context) {
         mContext = context;
@@ -120,7 +120,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 
     @Override
     public void addOrUpdataMarker(LocationInfo locationInfo, Bitmap bitmap) {
-        Marker marker = markerMap.get(locationInfo.getId());
+        Marker marker = markerMap.get(locationInfo.getKey());
         LatLng latLng = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());
 
         if (null != marker) {
@@ -138,9 +138,9 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             options.position(latLng);
             mLocMarker = aMap.addMarker(options);
             addCircle(latLng, locationInfo.getRotation());//添加定位精度圆
-            markerMap.put(locationInfo.getId(), mLocMarker);
+            markerMap.put(locationInfo.getKey(), mLocMarker);
             mLocMarker.setTitle("my-location");
-            if (locationInfo.getId() == KEY_MY_LOCATION) {
+            if (locationInfo.getKey().equals(KEY_MY_LOCATION)) {
                 // 传感器控制我的位置标记的旋转角度
                 mSensorHelper.setCurrentMarker(marker);
             }
@@ -157,7 +157,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         if (null != aMapLocation && aMapLocation.getErrorCode() == 0) {
 
             LocationInfo locationInfo = new LocationInfo();
-            locationInfo.setId(KEY_MY_LOCATION);
+            locationInfo.setKey(KEY_MY_LOCATION);
             locationInfo.setLatitude(aMapLocation.getLatitude());
             locationInfo.setLongitude(aMapLocation.getLongitude());
             locationInfo.setRotation(aMapLocation.getAccuracy());
