@@ -1,4 +1,4 @@
-package mytaxi.dalimao.diudiu;
+package com.dalimao.mytaxi;
 
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;

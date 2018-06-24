@@ -1,4 +1,4 @@
-package mytaxi.dalimao.diudiu.splash.common.http.impl;
+package com.dalimao.mytaxi.splash.common.http.impl;
 
 import com.dalimao.mytaxi.common.http.IHttpClient;
 import com.dalimao.mytaxi.common.http.IRequest;

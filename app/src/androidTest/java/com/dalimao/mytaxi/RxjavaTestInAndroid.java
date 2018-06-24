@@ -1,4 +1,4 @@
-package mytaxi.dalimao.diudiu;
+package com.dalimao.mytaxi;
 
 import android.support.test.runner.AndroidJUnit4;
 import android.util.Log;
@@ -21,6 +21,7 @@ import rx.schedulers.Schedulers;
  * @Email:yuannunhua@gmail.com
  * @Date:2018/6/219:13
  */
+
 @RunWith(AndroidJUnit4.class)
 public class RxjavaTestInAndroid {
 
@@ -32,7 +33,7 @@ public class RxjavaTestInAndroid {
 
     @Test
     public void mapTest() {
-       final String TAG = "mapTest";
+        final String TAG = "mapTest";
         final String name = "ztman-for-army";
         Observable.just(name)
                 .subscribeOn(Schedulers.newThread())//指定下一个生产节点在新的线程中处理  并且在下一个节点的输入，就是这个节点的输出
@@ -64,8 +65,8 @@ public class RxjavaTestInAndroid {
                     @Override
                     public void call(User user) {
 
-                        Log.e(TAG,"消费>observeOn-call=" + Thread.currentThread().getName());
-                        Log.e(TAG,"消费>observeOn-call-User=" + user);
+                        Log.e(TAG, "消费>observeOn-call=" + Thread.currentThread().getName());
+                        Log.e(TAG, "消费>observeOn-call-User=" + user);
                     }
                 });
 

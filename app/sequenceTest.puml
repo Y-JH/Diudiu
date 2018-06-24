@@ -1,0 +1,10 @@
+@startuml
+hide footbox
+actor 学术袁
+学术袁 -> "schedulerTest()" as B: 右击鼠标/`Run 'schedulerTest()'
+ -> "setUp()" : setUp()在测试方法前优先执行
+ -> "TearDown()": TearDown()在测试方法前、setUp()后执行
+ -> "Android模拟器": 启动安卓模拟器、运行单元测试程序
+ B -> B : 执行单元测试代码
+
+@enduml

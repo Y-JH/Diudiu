@@ -1,4 +1,4 @@
-package mytaxi.dalimao.diudiu;
+package com.dalimao.mytaxi;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

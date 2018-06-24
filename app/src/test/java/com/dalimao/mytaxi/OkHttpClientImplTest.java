@@ -1,4 +1,4 @@
-package mytaxi.dalimao.diudiu;
+package com.dalimao.mytaxi;
 
 import org.junit.Test;
 
@@ -22,7 +22,7 @@ import okhttp3.Response;
  * @Email:yuannunhua@gmail.com
  * @Date:2018/6/1912:36
  */
-public class Okhttp3Test {
+public class OkHttpClientImplTest {
 
     /**
      * 功能：使用get方式进行http请求的测试
@@ -30,8 +30,7 @@ public class Okhttp3Test {
      * @return String
      */
     @Test
-    public void httpGet() {
-
+    public void get() {
         String url = "https://httpbin.org/get";
 //        String url = "http://gank.io/api/xiandu/categories";
         OkHttpClient okHttpClient = new OkHttpClient();
@@ -53,7 +52,7 @@ public class Okhttp3Test {
      * 功能：使用post方式进行http请求的测试
      */
     @Test
-    public void httpPost() {
+    public void post() {
         MediaType JSON
                 = MediaType.parse("application/json; charset=utf-8");
 

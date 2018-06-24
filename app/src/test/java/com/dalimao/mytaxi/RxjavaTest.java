@@ -1,4 +1,4 @@
-package mytaxi.dalimao.diudiu;
+package com.dalimao.mytaxi;
 
 import org.junit.Before;
 import org.junit.Test;
