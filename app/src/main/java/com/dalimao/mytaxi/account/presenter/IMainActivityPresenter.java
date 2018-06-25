@@ -1,6 +1,7 @@
 package com.dalimao.mytaxi.account.presenter;
 
 import com.dalimao.mytaxi.common.eventbus.IEventBusSubscriber;
+import com.dalimao.mytaxi.lbs.CallDriverBean;
 import com.dalimao.mytaxi.lbs.LocationInfo;
 
 /**
@@ -24,4 +25,11 @@ public interface IMainActivityPresenter extends IEventBusSubscriber{
      * @param locationInfo
      */
     void updateLocationToServer(LocationInfo locationInfo);
+
+
+    /**
+     * 功能：呼叫司机
+     * @param callDriverBean
+     */
+    void callDriver(CallDriverBean callDriverBean);
 }

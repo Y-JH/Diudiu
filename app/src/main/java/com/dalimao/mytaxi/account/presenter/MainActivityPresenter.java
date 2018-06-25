@@ -5,8 +5,10 @@ import android.util.Log;
 import com.dalimao.mytaxi.account.module.IAccountManager;
 import com.dalimao.mytaxi.account.module.LoginResponse;
 import com.dalimao.mytaxi.account.module.NearDriverResponse;
+import com.dalimao.mytaxi.account.module.OrderStateOptResponse;
 import com.dalimao.mytaxi.common.eventbus.RxbusCallback;
 import com.dalimao.mytaxi.common.http.biz.BaseBizResponse;
+import com.dalimao.mytaxi.lbs.CallDriverBean;
 import com.dalimao.mytaxi.lbs.LocationInfo;
 import com.dalimao.mytaxi.main.IMainActivityView;
 
@@ -49,6 +51,18 @@ public class MainActivityPresenter implements IMainActivityPresenter {
         iMainActivityView.showDriverLocationChanged(info);
     }
 
+    @RxbusCallback
+    public void callDriverResponse(OrderStateOptResponse response){
+        if (response.getState() == OrderStateOptResponse.ORDER_STATE_CREATE) {
+            // 呼叫司机
+            if (response.getCode() == BaseBizResponse.STATE_OK) {
+                iMainActivityView.callDriverSuc();
+            } else {
+                iMainActivityView.callDriverFail();
+            }
+        }
+    }
+
     /**
      * 功能：更新服务器中客户端位置信息
      * @param locationInfo
@@ -56,6 +70,11 @@ public class MainActivityPresenter implements IMainActivityPresenter {
     @Override
     public void updateLocationToServer(LocationInfo locationInfo) {
         iAccountManager.updateLocationToServer(locationInfo);
+    }
+
+    @Override
+    public void callDriver(CallDriverBean callDriverBean) {
+        iAccountManager.callDriver(callDriverBean);
     }
 
     @RxbusCallback

@@ -28,4 +28,7 @@ public interface IMainActivityView {
      * @param info
      */
     void showDriverLocationChanged(LocationInfo info);
+
+    void callDriverSuc();
+    void callDriverFail();
 }

@@ -77,7 +77,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 
 
     //poi搜索
-    private String mCityName, mCurrentDirection;
+    private String mCityName, mCurrentDirection, mEndDirection;
     private PoiSearch.Query query;// Poi查询条件类
     private PoiSearch poiSearch;// POI搜索
     private PoiSearchListener poiSearchListener;

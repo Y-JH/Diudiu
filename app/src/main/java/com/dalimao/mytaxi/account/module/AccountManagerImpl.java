@@ -3,8 +3,6 @@ package com.dalimao.mytaxi.account.module;
 import android.os.Handler;
 import android.util.Log;
 
-import com.google.gson.Gson;
-
 import com.dalimao.mytaxi.MyTaxiApplication;
 import com.dalimao.mytaxi.common.eventbus.RxBus;
 import com.dalimao.mytaxi.common.http.IHttpClient;
@@ -16,7 +14,10 @@ import com.dalimao.mytaxi.common.http.impl.BaseRequest;
 import com.dalimao.mytaxi.common.http.impl.BaseResponse;
 import com.dalimao.mytaxi.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.common.util.DevUtil;
+import com.dalimao.mytaxi.lbs.CallDriverBean;
 import com.dalimao.mytaxi.lbs.LocationInfo;
+import com.google.gson.Gson;
+
 import rx.functions.Func1;
 
 /**
@@ -403,6 +404,46 @@ public class AccountManagerImpl implements IAccountManager {
 
                 }
                 return null;
+            }
+        });
+    }
+
+    /**
+     *  功能：呼叫司机
+     */
+    @Override
+    public void callDriver(final CallDriverBean callDriverBean) {
+        RxBus.getInstance().chainProcess("", new Func1() {
+            @Override
+            public Object call(Object o) {
+                SharedPreferencesDao sharedPreferencesDao =
+                        new SharedPreferencesDao(MyTaxiApplication.getInstance(),
+                                SharedPreferencesDao.FILE_ACCOUNT);
+                Account account =
+                        (Account) sharedPreferencesDao.get(SharedPreferencesDao.KEY_ACCOUNT,
+                                Account.class);
+                String uid = account.getUid();
+                String phone = account.getAccount();
+                String url = API.Config.getDomain() + API.CALL_DRIVER;
+                IRequest request = new BaseRequest(url);
+                request.setBody("uid", uid);
+                request.setBody("key", callDriverBean.getKey());
+                request.setBody("startLatitude", callDriverBean.getStartLatitude());
+                request.setBody("startLongitude", callDriverBean.getStartLongitude());
+                request.setBody("endLatitude", callDriverBean.getEndLatitude());
+                request.setBody("endLongitude", callDriverBean.getEndLongitude());
+                request.setBody("startAddr", callDriverBean.getStartAddr());
+                request.setBody("endAddr", callDriverBean.getEndAddr());
+                request.setBody("phone", phone);
+                request.setBody("cost", callDriverBean.getCost());
+                IResponse response = mHttpClient.post(request, false);
+
+                OrderStateOptResponse orderStateOptResponse = new OrderStateOptResponse();
+                orderStateOptResponse.setCode(response.getCode());
+                orderStateOptResponse.setState(OrderStateOptResponse.ORDER_STATE_CREATE);
+                Log.e(TAG, "call driver>>: " + response.getData());
+
+                return orderStateOptResponse;
             }
         });
     }

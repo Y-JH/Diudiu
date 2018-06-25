@@ -30,6 +30,7 @@ public final class API {
     // 获取附近的司机朋友
     public static final String GET_NEAR_DRIVERS = "/f34e28da5816433d/getNearDrivers?latitude=${latitude}&longitude=${longitude}";
     public static final String UPDATE_LOCATION = "/f34e28da5816433d/updateUserLocation";
+    public static final String CALL_DRIVER = "/f34e28da5816433d/callDriver";
     /**
      *  配置域名信息
      */

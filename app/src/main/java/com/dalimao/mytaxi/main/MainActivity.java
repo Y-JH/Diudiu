@@ -10,7 +10,9 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
@@ -30,6 +32,7 @@ import com.dalimao.mytaxi.common.storage.SharedPreferencesDao;
 import com.dalimao.mytaxi.common.util.AMapUtil;
 import com.dalimao.mytaxi.common.util.DevUtil;
 import com.dalimao.mytaxi.common.util.ToastUtil;
+import com.dalimao.mytaxi.lbs.CallDriverBean;
 import com.dalimao.mytaxi.lbs.GaodeLbsLayerImpl;
 import com.dalimao.mytaxi.lbs.ILbsLayer;
 import com.dalimao.mytaxi.lbs.ITextWatcher;
@@ -70,6 +73,17 @@ public class MainActivity extends AppCompatActivity
     private PoiListAdapter mpoiadapter;
     private LatLng mStart, mEnd;
 
+    //  操作状态相关元素
+    private LinearLayout optArea;
+    private LinearLayout loadingArea;
+    private TextView mTips;
+    private TextView mLoadingText;
+    private Button mBtnCall;
+    private Button mBtnCancel;
+    private Button mBtnPay;
+    private float mCost;
+    private boolean mIsLogin = true;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,10 +102,66 @@ public class MainActivity extends AppCompatActivity
         gaodeLbsLayer = new GaodeLbsLayerImpl(this);
         gaodeLbsLayer.onCreate(savedInstanceState);
         initViews();
+        initViews2();
         init();
         initPush();
     }
 
+    private void initViews2() {
+        optArea = (LinearLayout) findViewById(R.id.optArea);
+        loadingArea = (LinearLayout) findViewById(R.id.loading_area);
+        mLoadingText = (TextView) findViewById(R.id.loading_text);
+        mBtnCall = (Button) findViewById(R.id.btn_call_driver);
+        mBtnCancel = (Button) findViewById(R.id.btn_cancel);
+        mBtnPay = (Button) findViewById(R.id.btn_pay);
+        mTips = (TextView) findViewById(R.id.tips_info);
+
+
+        View.OnClickListener listener = new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                switch (v.getId()) {
+                    case  R.id.btn_call_driver:
+                        // 呼叫司机
+                        callDriver();
+                        break;
+                }
+            }
+
+
+        };
+        mBtnCall.setOnClickListener(listener);
+        mBtnCancel.setOnClickListener(listener);
+        mBtnPay.setOnClickListener(listener);
+    }
+    private void callDriver() {
+        if (mIsLogin) {
+            // 已登录，直接呼叫
+            mTips.setVisibility(View.GONE);
+            loadingArea.setVisibility(View.VISIBLE);
+            mLoadingText.setText(getString(R.string.calling_driver));
+            mBtnCancel.setEnabled(true);
+            mBtnCall.setEnabled(false);
+
+            CallDriverBean callDriverBean = new CallDriverBean();
+            callDriverBean.setKey(mPushKey);
+            callDriverBean.setCost(String.valueOf(mCost));
+            callDriverBean.setPhone("");
+            callDriverBean.setStartLatitude(String.valueOf(mStart.latitude));
+            callDriverBean.setStartLongitude(String.valueOf(mStart.longitude));
+            callDriverBean.setStartAddr(gaodeLbsLayer.getCurrentDirection());
+            callDriverBean.setEndAddr(mEndDirection);
+            callDriverBean.setEndLongitude(String.valueOf(mEnd.longitude));
+            callDriverBean.setEndLatitude(String.valueOf(mEnd.latitude));
+            //   请求呼叫
+            iMainActivityPresenter.callDriver(callDriverBean);
+        } else {
+            // 未登录，先登录
+//            iMainActivityPresenter.loginByToken();
+            ToastUtil.show(this, "用户未登录");
+        }
+    }
     private void initViews() {
         mapContainer = (FrameLayout) findViewById(R.id.map_container);
         mCity = (TextView) findViewById(R.id.city);
@@ -159,7 +229,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-
+private String mEndDirection;
     /**
      * 功能：根据输入edt输入内容搜索
      * @param results
@@ -181,16 +251,29 @@ public class MainActivity extends AppCompatActivity
         mEndEdit.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                LocationInfo info = results.get(position);
+                mEndDirection = info.getName();
                 DevUtil.closeInputMethod(MainActivity.this);
                 //标记终点
-                mEnd = new LatLng(results.get(position).getLatitude(), results.get(position).getLongitude());
+                mEnd = new LatLng(info.getLatitude(), info.getLongitude());
                 gaodeLbsLayer.addEndMarker(mEnd);
                 gaodeLbsLayer.drawDriverRoute(AMapUtil.convertToLatLonPoint(mStart), AMapUtil.convertToLatLonPoint(mEnd), new ILbsLayer.DriverRouteCompliteListener() {
                     @Override
                     public void onDriverRouteComplite(RouteInfo routeInfo) {
                         ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost()+"<-");
+                        mCost = routeInfo.getTaxiCost();
                         gaodeLbsLayer.moveCamera(mStart, mEnd);
+
+
+                        //显示操作区域
+                        optArea.setVisibility(View.VISIBLE);
+                        String infoString = getString(R.string.route_info);
+                        infoString = String.format(infoString,
+                                new Float(routeInfo.getDistance()).intValue(),
+                                mCost,
+                                routeInfo.getDuration());
+                        mTips.setVisibility(View.VISIBLE);
+                        mTips.setText(infoString);
 
                     }
 
@@ -335,6 +418,20 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void showDriverLocationChanged(LocationInfo info) {
         gaodeLbsLayer.addOrUpdataMarker(info, bitmap);
+    }
+
+    @Override
+    public void callDriverSuc() {
+        loadingArea.setVisibility(View.GONE);
+        mTips.setVisibility(View.VISIBLE);
+        mTips.setText(getString(R.string.show_call_suc));
+    }
+
+    @Override
+    public void callDriverFail() {
+        loadingArea.setVisibility(View.GONE);
+        mTips.setVisibility(View.VISIBLE);
+        mTips.setText(getString(R.string.show_call_fail));
     }
 
 

@@ -2,6 +2,7 @@ package com.dalimao.mytaxi.account.module;
 
 import android.os.Handler;
 
+import com.dalimao.mytaxi.lbs.CallDriverBean;
 import com.dalimao.mytaxi.lbs.LocationInfo;
 
 /**
@@ -60,4 +61,9 @@ public interface IAccountManager {
      * @param locationInfo
      */
     void updateLocationToServer(LocationInfo locationInfo);
+
+    /**
+     * 功能：呼叫司机
+     */
+    void callDriver(CallDriverBean callDriverBean);
 }
