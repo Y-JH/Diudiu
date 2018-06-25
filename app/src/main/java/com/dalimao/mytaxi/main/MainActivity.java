@@ -5,8 +5,14 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
 import android.util.Log;
-import android.view.ViewGroup;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.AutoCompleteTextView;
+import android.widget.FrameLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import com.dalimao.mytaxi.MyTaxiApplication;
 import com.dalimao.mytaxi.R;
@@ -20,11 +26,17 @@ import com.dalimao.mytaxi.common.eventbus.RxBus;
 import com.dalimao.mytaxi.common.http.api.API;
 import com.dalimao.mytaxi.common.http.impl.OkHttpClientImpl;
 import com.dalimao.mytaxi.common.storage.SharedPreferencesDao;
+import com.dalimao.mytaxi.common.util.AMapUtil;
+import com.dalimao.mytaxi.common.util.DevUtil;
 import com.dalimao.mytaxi.common.util.ToastUtil;
 import com.dalimao.mytaxi.lbs.GaodeLbsLayerImpl;
 import com.dalimao.mytaxi.lbs.ILbsLayer;
+import com.dalimao.mytaxi.lbs.ITextWatcher;
 import com.dalimao.mytaxi.lbs.LocationInfo;
+import com.dalimao.mytaxi.lbs.PoiAdapter;
+import com.dalimao.mytaxi.lbs.PoiListAdapter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cn.bmob.push.BmobPush;
@@ -42,15 +54,24 @@ import cn.bmob.v3.BmobInstallation;
 public class MainActivity extends AppCompatActivity
         implements IMainActivityView {
     private final static String TAG = "MainActivityPresenter";
+    private FrameLayout mapContainer;//地图mapview容器
+    private AutoCompleteTextView mStartEdit;//起点
+    private AutoCompleteTextView mEndEdit;//终点
+    private PoiAdapter mEndAdapter;
+    private TextView mCity;//标题显示城市名称
+
     private IMainActivityPresenter iMainActivityPresenter;
     private GaodeLbsLayerImpl gaodeLbsLayer;
+    private ListView mListView;
     private Bitmap bitmap;
     private String mPushKey;
+    private PoiListAdapter mpoiadapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         bitmap = BitmapFactory.decodeResource(getResources(),
                 R.drawable.y7);
         iMainActivityPresenter = new MainActivityPresenter(new AccountManagerImpl(new OkHttpClientImpl(),
@@ -63,13 +84,114 @@ public class MainActivity extends AppCompatActivity
 
         gaodeLbsLayer = new GaodeLbsLayerImpl(this);
         gaodeLbsLayer.onCreate(savedInstanceState);
+        initViews();
         init();
-
         initPush();
     }
 
+    private void initViews() {
+        mapContainer = (FrameLayout) findViewById(R.id.map_container);
+        mCity = (TextView) findViewById(R.id.city);
+        mStartEdit = (AutoCompleteTextView) findViewById(R.id.start);
+        mEndEdit = (AutoCompleteTextView) findViewById(R.id.end);
+        mListView = (ListView) findViewById(R.id.listView);
+
+
+        mStartEdit.addTextChangedListener(new ITextWatcher(new ITextWatcher.TextWatcherListener() {
+            @Override
+            public void onTextWatcher(Editable s) {
+                searchPOI(s);
+            }
+        }));
+
+        mEndEdit.addTextChangedListener(new ITextWatcher(new ITextWatcher.TextWatcherListener() {
+            @Override
+            public void onTextWatcher(Editable s) {
+                searchPOI(s);
+
+            }
+        }));
+
+        //显示一个相关地名的列表
+//        final String key = mStartEdit.getText().toString();
+//        gaodeLbsLayer.doPoiSearch(key, new ILbsLayer.PoiAsynSearchListener() {
+//            @Override
+//            public void onAsynPoiSearch(List<PoiItem> poiItemList) {
+//                mpoiadapter=new PoiListAdapter(MainActivity.this, poiItemList);
+//                mListView.setAdapter(mpoiadapter);
+//            }
+//
+//            @Override
+//            public void onAsynPoiItemSearched(List<PoiItem> poiItemList) {
+//                mpoiadapter =new PoiListAdapter(MainActivity.this, poiItemList);
+//                mListView.setAdapter(mpoiadapter);
+//            }
+//
+//            @Override
+//            public void onAsynError(int errorCode) {
+//
+//            }
+//        });
+    }
+
+
+    /**
+     * 功能：根据输入edt输入内容搜索
+     * @param s
+     */
+    private void searchPOI(Editable s) {
+        String newText = s.toString().trim();
+        if (!AMapUtil.IsEmptyOrNullString(newText)) {
+            gaodeLbsLayer.doSearchQuery(newText, new ILbsLayer.PoiSearchListener() {
+                @Override
+                public void onPoiSearch(List<LocationInfo> infoList) {
+                    updatePoiList(infoList);
+                }
+
+                @Override
+                public void onError(int errorCode) {
+
+                }
+            });
+        }
+    }
+
+
+    /**
+     * 功能：根据输入edt输入内容搜索
+     * @param results
+     */
+    private void updatePoiList(final List<LocationInfo> results){
+        List<String> listString = new ArrayList<String>();
+        for (int i = 0; i < results.size(); i++) {
+            listString.add(results.get(i).getName());
+        }
+
+        Log.e(TAG, "listString==" + listString.size()+listString.get(0));
+        if (mEndAdapter == null) {
+            mEndAdapter = new PoiAdapter(getApplicationContext(), listString);
+            mEndEdit.setAdapter(mEndAdapter);
+
+        } else {
+            mEndAdapter.setData(listString);
+        }
+        mEndEdit.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                ToastUtil.show(MainActivity.this, results.get(position).getName());
+                DevUtil.closeInputMethod(MainActivity.this);
+//                // TODO: 记录终点
+//                mEndLocation = results.get(position);
+//                // todo 绘制路径
+//                showRoute(mStartLocation, mEndLocation);
+            }
+        });
+        mEndAdapter.notifyDataSetChanged();
+    }
+
     //初始化推送服务
-    void initPush(){
+    void initPush() {
         // 推送服务
         // 初始化BmobSDK
         Bmob.initialize(this, API.Config.getAppId());
@@ -101,19 +223,21 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onLocation(LocationInfo locationInfo) {
+                mCity.setText(locationInfo.getName());
+                mStartEdit.setText(gaodeLbsLayer.getCurrentDirection());
                 //获取附近的司机i朋友
                 //获取司机位置信息，应该是进行一次
                 getNearDrivers(locationInfo);
             }
         });
 
-        ViewGroup mapViewContainer = (ViewGroup) findViewById(R.id.activity_main);
-        mapViewContainer.addView(gaodeLbsLayer.getMapView());
+        mapContainer.addView(gaodeLbsLayer.getMapView());
 
     }
 
     /**
      * 功能：更新服务器中客户端位置信息
+     *
      * @param locationInfo
      */
     private void updateLocationToServer(LocationInfo locationInfo) {
@@ -177,7 +301,7 @@ public class MainActivity extends AppCompatActivity
      */
     @Override
     public void showNearDrivers(NearDriverResponse driverResponse) {
-        Log.e(TAG, "drivers num="+driverResponse.getData().size());
+        Log.e(TAG, "drivers num=" + driverResponse.getData().size());
         List<LocationInfo> list = driverResponse.getData();
         for (int i = 0; i < list.size(); i++) {
             int index = i;
@@ -188,6 +312,7 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * 功能：司机的位置发生了变化，重新绘制
+     *
      * @param info
      */
     @Override

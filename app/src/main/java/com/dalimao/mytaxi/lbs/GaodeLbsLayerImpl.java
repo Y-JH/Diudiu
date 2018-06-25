@@ -25,8 +25,17 @@ import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.MyLocationStyle;
+import com.amap.api.services.core.AMapException;
+import com.amap.api.services.core.PoiItem;
+import com.amap.api.services.help.Inputtips;
+import com.amap.api.services.help.InputtipsQuery;
+import com.amap.api.services.help.Tip;
+import com.amap.api.services.poisearch.PoiResult;
+import com.amap.api.services.poisearch.PoiSearch;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -55,6 +64,13 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     private Circle mCircle;
     private Map<String, Marker> markerMap = new HashMap<>();
     private boolean isFirstLocation = true;
+
+
+    //poi搜索
+    private String mCityName, mCurrentDirection;
+    private PoiSearch.Query query;// Poi查询条件类
+    private PoiSearch poiSearch;// POI搜索
+    private PoiSearchListener poiSearchListener;
 
     public GaodeLbsLayerImpl(Context context) {
         mContext = context;
@@ -147,7 +163,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             }
         }
 
-        Log.e(TAG, "走入回调方法..");
+//        Log.e(TAG, "走入回调方法..");
         mSensorHelper.setCurrentMarker(marker);
 
     }
@@ -156,12 +172,14 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     @Override
     public void onLocationChanged(AMapLocation aMapLocation) {
         if (null != aMapLocation && aMapLocation.getErrorCode() == 0) {
-
             LocationInfo locationInfo = new LocationInfo();
             locationInfo.setKey(KEY_MY_LOCATION);
             locationInfo.setLatitude(aMapLocation.getLatitude());
             locationInfo.setLongitude(aMapLocation.getLongitude());
             locationInfo.setRotation(aMapLocation.getAccuracy());
+            locationInfo.setName(aMapLocation.getCity());
+            mCityName = aMapLocation.getCity();
+            mCurrentDirection = aMapLocation.getPoiName();
 
             LatLng lat = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());// 当前坐标
             CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(new CameraPosition(lat, 16, 30, 0));
@@ -178,6 +196,13 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             Log.e(TAG, errText);
         }
 
+    }
+
+    public String getCityName(){
+        return mCityName;
+    }
+    public String getCurrentDirection(){
+        return mCurrentDirection;
     }
 
     @Override
@@ -230,6 +255,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         }
     }
 
+
     void registerSensorHelper() {
         if (null == mSensorHelper)
             mSensorHelper = new SensorEventHelper(mContext);
@@ -254,5 +280,81 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         options.center(latlng);
         options.radius(radius);
         mCircle = aMap.addCircle(options);
+    }
+
+
+    /**
+     * 功能：poi 地理位置搜索
+     * @param key
+     */
+    @Override
+    public void doSearchQuery(String key, final PoiSearchListener listener) {
+        // 1 组装关键字
+        InputtipsQuery inputQuery = new InputtipsQuery(key, "");
+        Inputtips inputTips = new Inputtips(mContext, inputQuery);
+        // 2 监听处理搜索结果
+        inputTips.setInputtipsListener(new Inputtips.InputtipsListener() {
+            @Override
+            public void onGetInputtips(List<Tip> tipList, int rCode) {
+//                Log.e(TAG, "tipList===="+tipList.size()+"---"+tipList.get(0).getName()+"---"+tipList.get(0).getPoint().getLatitude());
+                if (rCode == AMapException.CODE_AMAP_SUCCESS) {
+                    // 正确返回解析结果
+                    List<LocationInfo> locationInfos = new ArrayList<LocationInfo>();
+
+                    for (int i = 0; i < tipList.size(); i++) {
+                        Tip tip = tipList.get(i);
+                        LocationInfo locationInfo =
+                                new LocationInfo(tip.getPoint().getLatitude(),
+                                        tip.getPoint().getLongitude());
+                        locationInfo.setName(tip.getName());
+                        locationInfos.add(locationInfo);
+                    }
+                    listener.onPoiSearch(locationInfos);
+                } else {
+                    listener.onError(rCode);
+                }
+            }
+        });
+
+        // 3 开始异步搜索
+        inputTips.requestInputtipsAsyn();
+    }
+
+    @Override
+    public void doPoiSearch(String key, final PoiAsynSearchListener listener) {
+        PoiSearch.Query mPoiSearchQuery = new PoiSearch.Query(key, "", getCityName());
+        mPoiSearchQuery.requireSubPois(true);   //true 搜索结果包含POI父子关系; false
+        mPoiSearchQuery.setPageSize(10);
+        mPoiSearchQuery.setPageNum(0);
+        PoiSearch poiSearch = new PoiSearch(mContext,mPoiSearchQuery);
+        poiSearch.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
+            @Override
+            public void onPoiSearched(PoiResult poiResult, int rcode) {
+                if (rcode == AMapException.CODE_AMAP_SUCCESS) {
+                    if (poiResult != null ) {
+                        List<PoiItem> poiItems = poiResult.getPois();
+                        listener.onAsynPoiSearch(poiItems);
+
+//                        mpoiadapter=new PoiListAdapter(mContext, poiItems);
+//                        mPoiSearchList.setAdapter(mpoiadapter);
+                    }
+                } else {
+                   listener.onAsynError(rcode);
+                }
+            }
+
+            @Override
+            public void onPoiItemSearched(PoiItem poiItem, int rcode) {
+                if (rcode == AMapException.CODE_AMAP_SUCCESS) {
+                    List<PoiItem> poiItems = new ArrayList<PoiItem>();
+                    poiItems.add(poiItem);
+
+                    listener.onAsynPoiItemSearched(poiItems);
+//                    mpoiadapter=new PoiListAdapter(mContext, poiItems);
+//                    mPoiSearchList.setAdapter(mpoiadapter);
+                }
+            }
+        });
+        poiSearch.searchPOIAsyn();
     }
 }

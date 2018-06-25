@@ -4,6 +4,10 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 
+import com.amap.api.services.core.PoiItem;
+
+import java.util.List;
+
 /**
  * @Title:ILbsLayer
  * @Package:com.dalimao.diudiu.go.lbs
@@ -37,10 +41,32 @@ public interface ILbsLayer {
     void onPause();
     void Destory();
 
+    /**
+     * 功能：poi 地理位置搜索
+     * @param key
+     */
+    void doSearchQuery(String key, PoiSearchListener listener);
+    void doPoiSearch(String key, PoiAsynSearchListener listener);
 
+    //目的：是把定位之后的结果暴露在MainActivity中
     interface CommoneLocationChangedListener {
 
         void onLocationChanged(LocationInfo locationInfo);
         void onLocation(LocationInfo locationInfo);
+    }
+
+    //目的：是把搜索之后的结果暴露在MainActivity中
+    interface PoiSearchListener {
+
+        void onPoiSearch(List<LocationInfo> infoList);
+        void onError(int errorCode);
+    }
+
+    //目的：是把搜索之后的结果暴露在MainActivity中
+    interface PoiAsynSearchListener {
+
+        void onAsynPoiSearch(List<PoiItem> poiItemList);
+        void onAsynPoiItemSearched(List<PoiItem> poiItemList);
+        void onAsynError(int errorCode);
     }
 }

@@ -15,6 +15,11 @@ public class LocationInfo {
     private double longitude;
     private float rotation;
 
+    public LocationInfo(double latitude, double longitude) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
+
     public LocationInfo() {
     }
 
