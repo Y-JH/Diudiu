@@ -4,6 +4,8 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 
+import com.amap.api.maps2d.model.LatLng;
+import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.core.PoiItem;
 
 import java.util.List;
@@ -41,6 +43,12 @@ public interface ILbsLayer {
     void onPause();
     void Destory();
 
+    void addStartMarker(LatLng mStartPoint);//添加起点位置标记
+    void addEndMarker(LatLng mEndPoint);//添加终点位置标记
+    void drawDriverRoute(LatLonPoint mStartPoint, LatLonPoint mEndPoint, DriverRouteCompliteListener driverRouteCompliteListener);//绘制驾车路线
+    //移动相机，通过围栏方式把起点和终点展现在视野范围
+    void moveCamera(LatLng mStart, LatLng mEnd);
+
     /**
      * 功能：poi 地理位置搜索
      * @param key
@@ -68,5 +76,12 @@ public interface ILbsLayer {
         void onAsynPoiSearch(List<PoiItem> poiItemList);
         void onAsynPoiItemSearched(List<PoiItem> poiItemList);
         void onAsynError(int errorCode);
+    }
+
+    //目的：是把司机路线绘制后的结果暴露在MainActivity中
+    interface DriverRouteCompliteListener {
+
+        void onDriverRouteComplite(RouteInfo routeInfo);
+        void onDriverError(String err);
     }
 }

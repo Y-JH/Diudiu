@@ -14,6 +14,7 @@ import android.widget.FrameLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.amap.api.maps2d.model.LatLng;
 import com.dalimao.mytaxi.MyTaxiApplication;
 import com.dalimao.mytaxi.R;
 import com.dalimao.mytaxi.account.module.AccountManagerImpl;
@@ -35,6 +36,7 @@ import com.dalimao.mytaxi.lbs.ITextWatcher;
 import com.dalimao.mytaxi.lbs.LocationInfo;
 import com.dalimao.mytaxi.lbs.PoiAdapter;
 import com.dalimao.mytaxi.lbs.PoiListAdapter;
+import com.dalimao.mytaxi.lbs.RouteInfo;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,6 +68,7 @@ public class MainActivity extends AppCompatActivity
     private Bitmap bitmap;
     private String mPushKey;
     private PoiListAdapter mpoiadapter;
+    private LatLng mStart, mEnd;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -179,12 +182,23 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-                ToastUtil.show(MainActivity.this, results.get(position).getName());
                 DevUtil.closeInputMethod(MainActivity.this);
-//                // TODO: 记录终点
-//                mEndLocation = results.get(position);
-//                // todo 绘制路径
-//                showRoute(mStartLocation, mEndLocation);
+                //标记终点
+                mEnd = new LatLng(results.get(position).getLatitude(), results.get(position).getLongitude());
+                gaodeLbsLayer.addEndMarker(mEnd);
+                gaodeLbsLayer.drawDriverRoute(AMapUtil.convertToLatLonPoint(mStart), AMapUtil.convertToLatLonPoint(mEnd), new ILbsLayer.DriverRouteCompliteListener() {
+                    @Override
+                    public void onDriverRouteComplite(RouteInfo routeInfo) {
+                        ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost()+"<-");
+                        gaodeLbsLayer.moveCamera(mStart, mEnd);
+
+                    }
+
+                    @Override
+                    public void onDriverError(String err) {
+
+                    }
+                });
             }
         });
         mEndAdapter.notifyDataSetChanged();
@@ -225,6 +239,9 @@ public class MainActivity extends AppCompatActivity
             public void onLocation(LocationInfo locationInfo) {
                 mCity.setText(locationInfo.getName());
                 mStartEdit.setText(gaodeLbsLayer.getCurrentDirection());
+                mStart = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());
+                //标记起点
+                gaodeLbsLayer.addStartMarker(mStart);
                 //获取附近的司机i朋友
                 //获取司机位置信息，应该是进行一次
                 getNearDrivers(locationInfo);

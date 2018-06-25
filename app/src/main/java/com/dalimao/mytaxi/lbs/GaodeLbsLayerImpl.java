@@ -22,16 +22,26 @@ import com.amap.api.maps2d.model.CameraPosition;
 import com.amap.api.maps2d.model.Circle;
 import com.amap.api.maps2d.model.CircleOptions;
 import com.amap.api.maps2d.model.LatLng;
+import com.amap.api.maps2d.model.LatLngBounds;
 import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.MyLocationStyle;
 import com.amap.api.services.core.AMapException;
+import com.amap.api.services.core.LatLonPoint;
 import com.amap.api.services.core.PoiItem;
 import com.amap.api.services.help.Inputtips;
 import com.amap.api.services.help.InputtipsQuery;
 import com.amap.api.services.help.Tip;
 import com.amap.api.services.poisearch.PoiResult;
 import com.amap.api.services.poisearch.PoiSearch;
+import com.amap.api.services.route.BusRouteResult;
+import com.amap.api.services.route.DrivePath;
+import com.amap.api.services.route.DriveRouteResult;
+import com.amap.api.services.route.RideRouteResult;
+import com.amap.api.services.route.RouteSearch;
+import com.amap.api.services.route.WalkRouteResult;
+import com.dalimao.mytaxi.R;
+import com.dalimao.mytaxi.common.util.AMapUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,6 +82,10 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     private PoiSearch poiSearch;// POI搜索
     private PoiSearchListener poiSearchListener;
 
+    //driver路线规划、绘制
+    private RouteSearch mRouteSearch;
+    private DriveRouteResult mDriveRouteResult;
+
     public GaodeLbsLayerImpl(Context context) {
         mContext = context;
         //创建地图对象
@@ -88,7 +102,6 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     @Override
     public void onCreate(Bundle bundle) {
         mapView.onCreate(bundle);// 此方法必须重写
-
 
     }
 
@@ -187,10 +200,10 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             if (isFirstLocation) {
                 isFirstLocation = false;//说明是第一次
                 mLocationChangeListener.onLocation(locationInfo);
+                aMap.moveCamera(cameraUpdate);
             } else {
                 mLocationChangeListener.onLocationChanged(locationInfo);
             }
-            aMap.moveCamera(cameraUpdate);
         } else {
             String errText = "定位....," + aMapLocation.getErrorCode() + ": " + aMapLocation.getErrorInfo();
             Log.e(TAG, errText);
@@ -198,10 +211,11 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 
     }
 
-    public String getCityName(){
+    public String getCityName() {
         return mCityName;
     }
-    public String getCurrentDirection(){
+
+    public String getCurrentDirection() {
         return mCurrentDirection;
     }
 
@@ -255,6 +269,104 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         }
     }
 
+    @Override
+    public void addStartMarker(final LatLng mStartPoint) {
+        aMap.addMarker(new MarkerOptions()
+                .position(mStartPoint)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_start)));
+    }
+
+    @Override
+    public void addEndMarker(final LatLng mEndPoint) {
+        aMap.addMarker(new MarkerOptions()
+                .position(mEndPoint)
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.amap_end)));
+    }
+
+    @Override
+    public void drawDriverRoute(LatLonPoint mStartPoint, LatLonPoint mEndPoint,
+                                final DriverRouteCompliteListener listener) {
+        //执行了驾车模式，这里回调
+        mRouteSearch = new RouteSearch(mContext);
+
+
+        final RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(mStartPoint, mEndPoint);
+        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(fromAndTo, RouteSearch.DRIVING_SINGLE_DEFAULT, null,
+                null, "");// 第一个参数表示路径规划的起点和终点，第二个参数表示驾车模式，第三个参数表示途经点，第四个参数表示避让区域，第五个参数表示避让道路
+        mRouteSearch.setRouteSearchListener(new RouteSearch.OnRouteSearchListener() {
+            @Override
+            public void onBusRouteSearched(BusRouteResult busRouteResult, int errorCode) {
+
+            }
+
+            @Override
+            public void onDriveRouteSearched(DriveRouteResult driveRouteResult, int errorCode) {
+                aMap.clear();// 清理地图上的所有覆盖物
+                if (errorCode == AMapException.CODE_AMAP_SUCCESS) {
+                    if (driveRouteResult != null && driveRouteResult.getPaths() != null) {
+                        if (driveRouteResult.getPaths().size() > 0) {
+                            mDriveRouteResult = driveRouteResult;
+                            final DrivePath drivePath = mDriveRouteResult.getPaths()
+                                    .get(0);
+                            DrivingRouteOverLay drivingRouteOverlay = new DrivingRouteOverLay(
+                                    mContext, aMap, drivePath,
+                                    mDriveRouteResult.getStartPos(),
+                                    mDriveRouteResult.getTargetPos(), null);
+                            drivingRouteOverlay.setNodeIconVisibility(false);//设置节点marker是否显示
+                            drivingRouteOverlay.setIsColorfulline(true);//是否用颜色展示交通拥堵情况，默认true
+                            drivingRouteOverlay.removeFromMap();
+                            drivingRouteOverlay.addToMap();
+                            drivingRouteOverlay.zoomToSpan();
+
+                            int dis = (int) drivePath.getDistance();
+                            int dur = (int) drivePath.getDuration();
+                            String des = AMapUtil.getFriendlyTime(dur) + "(" + AMapUtil.getFriendlyLength(dis) + ")";
+                            int taxiCost = (int) mDriveRouteResult.getTaxiCost();
+                            RouteInfo routeInfo = new RouteInfo();
+                            routeInfo.setDistance(dis);
+                            routeInfo.setDuration(dur);
+                            routeInfo.setTaxiCost(taxiCost);
+
+                            listener.onDriverRouteComplite(routeInfo);
+                        } else if (driveRouteResult != null && driveRouteResult.getPaths() == null) {
+                            listener.onDriverError("无返回数据");
+                        }
+
+                    } else {
+                        listener.onDriverError("无返回数据");
+                    }
+                } else {
+                    listener.onDriverError("无返回数据 code=" + errorCode);
+                }
+            }
+
+            @Override
+            public void onWalkRouteSearched(WalkRouteResult walkRouteResult, int i) {
+
+            }
+
+            @Override
+            public void onRideRouteSearched(RideRouteResult rideRouteResult, int i) {
+
+            }
+        });
+        mRouteSearch.calculateDriveRouteAsyn(query);// 异步路径规划驾车模式查询
+    }
+
+    /**
+     * 功能：移动相机，通过围栏方式把起点和终点展现在视野范围
+     * @param mStart
+     * @param mEnd
+     */
+    @Override
+    public void moveCamera(LatLng mStart, LatLng mEnd) {
+        LatLngBounds.Builder builder = LatLngBounds.builder();
+        builder.include(mStart);
+        builder.include(mEnd);
+        LatLngBounds latLngBounds = builder.build();
+        aMap.moveCamera(CameraUpdateFactory.newLatLngBounds(latLngBounds, 300));
+    }
+
 
     void registerSensorHelper() {
         if (null == mSensorHelper)
@@ -285,6 +397,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 
     /**
      * 功能：poi 地理位置搜索
+     *
      * @param key
      */
     @Override
@@ -326,12 +439,12 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         mPoiSearchQuery.requireSubPois(true);   //true 搜索结果包含POI父子关系; false
         mPoiSearchQuery.setPageSize(10);
         mPoiSearchQuery.setPageNum(0);
-        PoiSearch poiSearch = new PoiSearch(mContext,mPoiSearchQuery);
+        PoiSearch poiSearch = new PoiSearch(mContext, mPoiSearchQuery);
         poiSearch.setOnPoiSearchListener(new PoiSearch.OnPoiSearchListener() {
             @Override
             public void onPoiSearched(PoiResult poiResult, int rcode) {
                 if (rcode == AMapException.CODE_AMAP_SUCCESS) {
-                    if (poiResult != null ) {
+                    if (poiResult != null) {
                         List<PoiItem> poiItems = poiResult.getPois();
                         listener.onAsynPoiSearch(poiItems);
 
@@ -339,7 +452,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 //                        mPoiSearchList.setAdapter(mpoiadapter);
                     }
                 } else {
-                   listener.onAsynError(rcode);
+                    listener.onAsynError(rcode);
                 }
             }
 
