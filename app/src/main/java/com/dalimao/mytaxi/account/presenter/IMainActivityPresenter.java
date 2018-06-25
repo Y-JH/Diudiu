@@ -32,4 +32,7 @@ public interface IMainActivityPresenter extends IEventBusSubscriber{
      * @param callDriverBean
      */
     void callDriver(CallDriverBean callDriverBean);
+
+    //功能：取消呼叫订单
+    void cancelCall();
 }

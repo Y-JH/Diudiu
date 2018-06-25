@@ -9,6 +9,7 @@ package com.dalimao.mytaxi.lbs;
  * @Date:2018/6/2514:43
  */
 public class CallDriverBean {
+    String uid;
     String key;
     String startLatitude;
     String startLongitude;
@@ -94,18 +95,4 @@ public class CallDriverBean {
         this.cost = cost;
     }
 
-    @Override
-    public String toString() {
-        return "CallDriverBean{" +
-                "key='" + key + '\'' +
-                ", startLatitude='" + startLatitude + '\'' +
-                ", startLongitude='" + startLongitude + '\'' +
-                ", endLatitude='" + endLatitude + '\'' +
-                ", endLongitude='" + endLongitude + '\'' +
-                ", startAddr='" + startAddr + '\'' +
-                ", endAddr='" + endAddr + '\'' +
-                ", phone='" + phone + '\'' +
-                ", cost='" + cost + '\'' +
-                '}';
-    }
 }

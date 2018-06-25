@@ -31,6 +31,7 @@ public final class API {
     public static final String GET_NEAR_DRIVERS = "/f34e28da5816433d/getNearDrivers?latitude=${latitude}&longitude=${longitude}";
     public static final String UPDATE_LOCATION = "/f34e28da5816433d/updateUserLocation";
     public static final String CALL_DRIVER = "/f34e28da5816433d/callDriver";
+    public static final String CANCEL_ORDER = "/f34e28da5816433d/cancelOrder";
     /**
      *  配置域名信息
      */

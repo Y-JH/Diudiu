@@ -35,6 +35,7 @@ public class AccountManagerImpl implements IAccountManager {
     private IHttpClient mHttpClient;
     private SharedPreferencesDao dao;
 
+
     public AccountManagerImpl(IHttpClient httpClient, SharedPreferencesDao dao) {
         this.mHttpClient = httpClient;
         this.dao = dao;
@@ -367,7 +368,7 @@ public class AccountManagerImpl implements IAccountManager {
                 request.setBody("latitude", String.valueOf(locationInfo.getLatitude()));
                 request.setBody("longitude", String.valueOf(locationInfo.getLongitude()));
                 IResponse response = mHttpClient.get(request, false);
-                Log.d(TAG, "fetchNearDrivers--"+response.getData());
+                Log.d(TAG, "fetchNearDrivers--" + response.getData());
 
                 NearDriverResponse nearDriverResponse = new NearDriverResponse();
                 if (response.getCode() == BaseResponse.STATE_OK) {
@@ -381,6 +382,7 @@ public class AccountManagerImpl implements IAccountManager {
 
     /**
      * 功能：更新服务器中客户端位置信息
+     *
      * @param locationInfo
      */
     @Override
@@ -396,7 +398,7 @@ public class AccountManagerImpl implements IAccountManager {
                 request.setBody("rotation", String.valueOf(locationInfo.getRotation()));
                 request.setBody("key", locationInfo.getKey());
                 IResponse response = mHttpClient.post(request, false);
-                Log.d(TAG, "updateLocationToServer--"+response.getData());
+                Log.d(TAG, "updateLocationToServer--" + response.getData());
 
                 if (response.getCode() == BaseResponse.STATE_OK) {
 
@@ -409,7 +411,7 @@ public class AccountManagerImpl implements IAccountManager {
     }
 
     /**
-     *  功能：呼叫司机
+     * 功能：呼叫司机
      */
     @Override
     public void callDriver(final CallDriverBean callDriverBean) {
@@ -439,9 +441,36 @@ public class AccountManagerImpl implements IAccountManager {
                 IResponse response = mHttpClient.post(request, false);
 
                 OrderStateOptResponse orderStateOptResponse = new OrderStateOptResponse();
+                if (response.getCode() == BaseBizResponse.STATE_OK) {
+                    // 解析订单信息
+                    orderStateOptResponse =
+                            new Gson().fromJson(response.getData(),
+                                    OrderStateOptResponse.class);
+                }
+
                 orderStateOptResponse.setCode(response.getCode());
                 orderStateOptResponse.setState(OrderStateOptResponse.ORDER_STATE_CREATE);
                 Log.e(TAG, "call driver>>: " + response.getData());
+
+                return orderStateOptResponse;
+            }
+        });
+    }
+
+    @Override
+    public void cancelCall(final String orderId) {
+        RxBus.getInstance().chainProcess("", new Func1() {
+            @Override
+            public Object call(Object o) {
+                String url = API.Config.getDomain() + API.CANCEL_ORDER;
+                IRequest request = new BaseRequest(url);
+                request.setBody("id", orderId);
+                IResponse response = mHttpClient.post(request, false);
+
+                OrderStateOptResponse orderStateOptResponse = new OrderStateOptResponse();
+                orderStateOptResponse.setCode(response.getCode());
+                orderStateOptResponse.setState(OrderStateOptResponse.ORDER_STATE_CANCEL);
+                Log.e(TAG, "cancel driver>>: " + response.getData());
 
                 return orderStateOptResponse;
             }

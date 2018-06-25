@@ -31,4 +31,12 @@ public interface IMainActivityView {
 
     void callDriverSuc();
     void callDriverFail();
+
+    //取消订单状态，即隐藏那写UI
+    void hideDriverCallShowing();
+
+    //取消成功
+    void cancellSuc();
+    //取消失败
+    void cancellFail();
 }

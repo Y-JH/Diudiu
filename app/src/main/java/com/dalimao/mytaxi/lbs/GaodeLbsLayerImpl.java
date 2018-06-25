@@ -284,6 +284,19 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     }
 
     @Override
+    public void addMarker(LatLng latLng, int res, String key) {
+        Marker marker = markerMap.get(key);
+        if(null == marker){
+            markerMap.put(key, aMap.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .icon(BitmapDescriptorFactory.fromResource(res))));
+        }else {
+            marker.setPosition(latLng);
+        }
+
+    }
+
+    @Override
     public void drawDriverRoute(LatLonPoint mStartPoint, LatLonPoint mEndPoint,
                                 final DriverRouteCompliteListener listener) {
         //执行了驾车模式，这里回调
@@ -355,6 +368,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 
     /**
      * 功能：移动相机，通过围栏方式把起点和终点展现在视野范围
+     *
      * @param mStart
      * @param mEnd
      */
@@ -469,5 +483,20 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             }
         });
         poiSearch.searchPOIAsyn();
+    }
+
+    //清除地图上的所有标记
+    @Override
+    public void clearAllMarkers() {
+        markerMap.clear();
+        aMap.clear();// 清理地图上的所有覆盖物
+    }
+
+    //恢复视野
+    @Override
+    public void moveCameraToPoint(LatLng lat) {
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(new CameraPosition(lat, 16, 30, 0));
+        aMap.moveCamera(cameraUpdate);
+
     }
 }

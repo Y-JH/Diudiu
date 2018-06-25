@@ -66,4 +66,9 @@ public interface IAccountManager {
      * 功能：呼叫司机
      */
     void callDriver(CallDriverBean callDriverBean);
+
+    /**
+     * 功能：取消呼叫订单
+     */
+    void cancelCall(final String orderId);
 }

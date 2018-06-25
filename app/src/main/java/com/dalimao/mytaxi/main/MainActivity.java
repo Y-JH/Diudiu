@@ -83,6 +83,8 @@ public class MainActivity extends AppCompatActivity
     private Button mBtnPay;
     private float mCost;
     private boolean mIsLogin = true;
+    private String mEndDirection;
+    private LocationInfo locationInfo;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -122,9 +124,14 @@ public class MainActivity extends AppCompatActivity
             public void onClick(View v) {
 
                 switch (v.getId()) {
-                    case  R.id.btn_call_driver:
+                    case R.id.btn_call_driver:
                         // 呼叫司机
                         callDriver();
+                        break;
+
+                    case R.id.btn_cancel:
+                        //取消呼叫
+                        cancelCall();
                         break;
                 }
             }
@@ -135,6 +142,7 @@ public class MainActivity extends AppCompatActivity
         mBtnCancel.setOnClickListener(listener);
         mBtnPay.setOnClickListener(listener);
     }
+
     private void callDriver() {
         if (mIsLogin) {
             // 已登录，直接呼叫
@@ -162,6 +170,27 @@ public class MainActivity extends AppCompatActivity
             ToastUtil.show(this, "用户未登录");
         }
     }
+
+
+    /**
+     * 功能：取消呼叫快车
+     */
+    private void cancelCall() {
+        if (!mBtnCall.isEnabled()) {
+            //说明已经点击了呼叫
+            mTips.setVisibility(View.GONE);
+            loadingArea.setVisibility(View.VISIBLE);
+            mLoadingText.setText("订单取消中...");
+            mBtnCancel.setEnabled(false);
+
+            iMainActivityPresenter.cancelCall();
+
+        } else {
+            optArea.setVisibility(View.GONE);
+        }
+    }
+
+
     private void initViews() {
         mapContainer = (FrameLayout) findViewById(R.id.map_container);
         mCity = (TextView) findViewById(R.id.city);
@@ -210,6 +239,7 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * 功能：根据输入edt输入内容搜索
+     *
      * @param s
      */
     private void searchPOI(Editable s) {
@@ -229,18 +259,19 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-private String mEndDirection;
+
     /**
      * 功能：根据输入edt输入内容搜索
+     *
      * @param results
      */
-    private void updatePoiList(final List<LocationInfo> results){
+    private void updatePoiList(final List<LocationInfo> results) {
         List<String> listString = new ArrayList<String>();
         for (int i = 0; i < results.size(); i++) {
             listString.add(results.get(i).getName());
         }
 
-        Log.e(TAG, "listString==" + listString.size()+listString.get(0));
+        Log.e(TAG, "listString==" + listString.size() + listString.get(0));
         if (mEndAdapter == null) {
             mEndAdapter = new PoiAdapter(getApplicationContext(), listString);
             mEndEdit.setAdapter(mEndAdapter);
@@ -260,7 +291,7 @@ private String mEndDirection;
                 gaodeLbsLayer.drawDriverRoute(AMapUtil.convertToLatLonPoint(mStart), AMapUtil.convertToLatLonPoint(mEnd), new ILbsLayer.DriverRouteCompliteListener() {
                     @Override
                     public void onDriverRouteComplite(RouteInfo routeInfo) {
-                        ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost()+"<-");
+                        ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost() + "<-");
                         mCost = routeInfo.getTaxiCost();
                         gaodeLbsLayer.moveCamera(mStart, mEnd);
 
@@ -309,6 +340,7 @@ private String mEndDirection;
         gaodeLbsLayer.setLocationChangedListener(new ILbsLayer.CommoneLocationChangedListener() {
             @Override
             public void onLocationChanged(LocationInfo locationInfo) {
+
                 //客户端的位置、描点和上传个人位置信息，应该是一直进行的
                 //更新服务器中客户端位置信息
                 gaodeLbsLayer.addOrUpdataMarker(locationInfo,
@@ -322,6 +354,7 @@ private String mEndDirection;
             public void onLocation(LocationInfo locationInfo) {
                 mCity.setText(locationInfo.getName());
                 mStartEdit.setText(gaodeLbsLayer.getCurrentDirection());
+                MainActivity.this.locationInfo = locationInfo;
                 mStart = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());
                 //标记起点
                 gaodeLbsLayer.addStartMarker(mStart);
@@ -401,12 +434,16 @@ private String mEndDirection;
      */
     @Override
     public void showNearDrivers(NearDriverResponse driverResponse) {
-        Log.e(TAG, "drivers num=" + driverResponse.getData().size());
         List<LocationInfo> list = driverResponse.getData();
         for (int i = 0; i < list.size(); i++) {
             int index = i;
             if (index > 2) index -= 2;
-            gaodeLbsLayer.addOrUpdataMarker(list.get(i), bitmap);
+
+            LocationInfo info = list.get(i);
+
+            Log.e(TAG, "info.getKey====>>>" + info.getKey());
+            LatLng latLng = new LatLng(info.getLatitude(), info.getLongitude());
+            gaodeLbsLayer.addMarker(latLng, R.drawable.amap_car, info.getKey());
         }
     }
 
@@ -417,7 +454,8 @@ private String mEndDirection;
      */
     @Override
     public void showDriverLocationChanged(LocationInfo info) {
-        gaodeLbsLayer.addOrUpdataMarker(info, bitmap);
+        LatLng latLng = new LatLng(info.getLatitude(), info.getLongitude());
+        gaodeLbsLayer.addMarker(latLng, R.drawable.amap_car, info.getKey());
     }
 
     @Override
@@ -432,6 +470,40 @@ private String mEndDirection;
         loadingArea.setVisibility(View.GONE);
         mTips.setVisibility(View.VISIBLE);
         mTips.setText(getString(R.string.show_call_fail));
+    }
+
+    /**
+     * 功能：取消订单状态，即隐藏那写UI
+     */
+    @Override
+    public void hideDriverCallShowing() {
+        //清除地图上的所有标记
+        gaodeLbsLayer.clearAllMarkers();
+
+        //添加定位标记
+        gaodeLbsLayer.addOrUpdataMarker(locationInfo, BitmapFactory.decodeResource(getResources(),
+                R.drawable.navi_map_gps_locked));
+
+        //恢复地图的视野
+        gaodeLbsLayer.moveCameraToPoint(mStart);
+
+        //获取附近司机
+        getNearDrivers(locationInfo);
+
+        //隐藏操作栏
+        optArea.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void cancellSuc() {
+        ToastUtil.show(this, "取消订单成功");
+        this.hideDriverCallShowing();
+    }
+
+    @Override
+    public void cancellFail() {
+        ToastUtil.show(this, "取消订单失败");
+        mBtnCancel.setEnabled(true);
     }
 
 

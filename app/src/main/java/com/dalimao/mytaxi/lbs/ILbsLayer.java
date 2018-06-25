@@ -45,6 +45,7 @@ public interface ILbsLayer {
 
     void addStartMarker(LatLng mStartPoint);//添加起点位置标记
     void addEndMarker(LatLng mEndPoint);//添加终点位置标记
+    void addMarker(LatLng latLng, int res, String key);
     void drawDriverRoute(LatLonPoint mStartPoint, LatLonPoint mEndPoint, DriverRouteCompliteListener driverRouteCompliteListener);//绘制驾车路线
     //移动相机，通过围栏方式把起点和终点展现在视野范围
     void moveCamera(LatLng mStart, LatLng mEnd);
@@ -55,6 +56,11 @@ public interface ILbsLayer {
      */
     void doSearchQuery(String key, PoiSearchListener listener);
     void doPoiSearch(String key, PoiAsynSearchListener listener);
+
+    void clearAllMarkers();//清除地图上的所有标记
+
+    void moveCameraToPoint(LatLng lat);//恢复视野区
+
 
     //目的：是把定位之后的结果暴露在MainActivity中
     interface CommoneLocationChangedListener {
@@ -83,5 +89,6 @@ public interface ILbsLayer {
 
         void onDriverRouteComplite(RouteInfo routeInfo);
         void onDriverError(String err);
+
     }
 }
