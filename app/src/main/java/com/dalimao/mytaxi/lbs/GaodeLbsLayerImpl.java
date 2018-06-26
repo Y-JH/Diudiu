@@ -157,6 +157,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     public void addOrUpdataMarker(LocationInfo locationInfo, Bitmap bitmap) {
         Marker marker = markerMap.get(locationInfo.getKey());
         LatLng latLng = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());
+
         if (null != marker) {
             //如果标记marker存在 更新位置
             mCircle.setCenter(latLng);
@@ -173,15 +174,14 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             mLocMarker = aMap.addMarker(options);
             addCircle(latLng, locationInfo.getRotation());//添加定位精度圆
             markerMap.put(locationInfo.getKey(), mLocMarker);
-            mLocMarker.setTitle("my-location");
-            if (locationInfo.getKey().equals(KEY_MY_LOCATION)) {
-                // 传感器控制我的位置标记的旋转角度
-                mSensorHelper.setCurrentMarker(marker);
-            }
+            mLocMarker.setTitle("我的当前位置");
+
         }
 
-//        Log.e(TAG, "走入回调方法..");
-        mSensorHelper.setCurrentMarker(marker);
+        if (locationInfo.getKey().equals(KEY_MY_LOCATION)) {
+            // 传感器控制我的位置标记的旋转角度
+            mSensorHelper.setCurrentMarker(marker);
+        }
 
     }
 
@@ -195,16 +195,16 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             locationInfo.setLongitude(aMapLocation.getLongitude());
             locationInfo.setRotation(aMapLocation.getAccuracy());
             locationInfo.setName(aMapLocation.getCity());
+
             mCityName = aMapLocation.getCity();
             mCurrentDirection = aMapLocation.getPoiName();
 
             LatLng lat = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());// 当前坐标
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(new CameraPosition(lat, 16, 30, 0));
 
             if (isFirstLocation) {
                 isFirstLocation = false;//说明是第一次
                 mLocationChangeListener.onLocation(locationInfo);
-                aMap.moveCamera(cameraUpdate);
+                moveCameraToPoint(lat);
             } else {
                 mLocationChangeListener.onLocationChanged(locationInfo);
             }
@@ -249,7 +249,6 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         mapView.onResume();
         registerSensorHelper();
         setUpLocationClient();
-        isFirstLocation = true;
     }
 
     @Override
@@ -329,7 +328,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             @Override
             public void onDriveRouteSearched(DriveRouteResult driveRouteResult,
                                              int errorCode) {
-                aMap.clear();// 清理地图上的所有覆盖物
+//                aMap.clear();// 清理地图上的所有覆盖物
                 if (errorCode == AMapException.CODE_AMAP_SUCCESS) {
                     if (driveRouteResult != null && driveRouteResult.getPaths() != null) {
                         if (driveRouteResult.getPaths().size() > 0) {
@@ -348,7 +347,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
                             drivingRouteOverlay.setIsColorfulline(true);//是否用颜色展示交通拥堵情况，默认true
                             drivingRouteOverlay.removeFromMap();
                             drivingRouteOverlay.addToMap();
-                            drivingRouteOverlay.zoomToSpan();
+//                            drivingRouteOverlay.zoomToSpan();
 
 
 
@@ -386,6 +385,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         });
         mRouteSearch.calculateDriveRouteAsyn(query);// 异步路径规划驾车模式查询
     }
+
 
     /**
      * 功能：移动相机，通过围栏方式把起点和终点展现在视野范围
@@ -516,7 +516,7 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     //恢复视野
     @Override
     public void moveCameraToPoint(LatLng lat) {
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(new CameraPosition(lat, 16, 30, 0));
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newCameraPosition(new CameraPosition(lat, 17, 30, 0));
         aMap.moveCamera(cameraUpdate);
 
     }

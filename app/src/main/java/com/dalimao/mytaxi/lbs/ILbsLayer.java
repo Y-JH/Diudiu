@@ -50,6 +50,7 @@ public interface ILbsLayer {
                          LatLonPoint mEndPoint,
                          DriverRouteCompliteListener driverRouteCompliteListener,
             int resStartMarker, int resEndMarker);//绘制驾车路线
+
     //移动相机，通过围栏方式把起点和终点展现在视野范围
     void moveCamera(LatLng mStart, LatLng mEnd);
 

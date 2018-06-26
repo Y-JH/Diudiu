@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity
     private float mCost;
     private boolean mIsLogin = true;
     private String mEndDirection;
-    private LocationInfo locationInfo;
+    private LocationInfo myCurrentLocationInfo;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -293,30 +293,30 @@ public class MainActivity extends AppCompatActivity
                 gaodeLbsLayer.drawDriverRoute(AMapUtil.convertToLatLonPoint(mStart),
                         AMapUtil.convertToLatLonPoint(mEnd),
                         new ILbsLayer.DriverRouteCompliteListener() {
-                    @Override
-                    public void onDriverRouteComplite(RouteInfo routeInfo) {
-                        ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost() + "<-");
-                        mCost = routeInfo.getTaxiCost();
-                        gaodeLbsLayer.moveCamera(mStart, mEnd);
+                            @Override
+                            public void onDriverRouteComplite(RouteInfo routeInfo) {
+                                ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost() + "<-");
+                                mCost = routeInfo.getTaxiCost();
+                                gaodeLbsLayer.moveCamera(mStart, mEnd);
 
 
-                        //显示操作区域
-                        optArea.setVisibility(View.VISIBLE);
-                        String infoString = getString(R.string.route_info);
-                        infoString = String.format(infoString,
-                                new Float(routeInfo.getDistance()).intValue(),
-                                mCost,
-                                routeInfo.getDuration());
-                        mTips.setVisibility(View.VISIBLE);
-                        mTips.setText(infoString);
+                                //显示操作区域
+                                optArea.setVisibility(View.VISIBLE);
+                                String infoString = getString(R.string.route_info);
+                                infoString = String.format(infoString,
+                                        new Float(routeInfo.getDistance()).intValue(),
+                                        mCost,
+                                        routeInfo.getDuration());
+                                mTips.setVisibility(View.VISIBLE);
+                                mTips.setText(infoString);
 
-                    }
+                            }
 
-                    @Override
-                    public void onDriverError(String err) {
+                            @Override
+                            public void onDriverError(String err) {
 
-                    }
-                }, R.drawable.amap_start, R.drawable.amap_end);
+                            }
+                        }, R.drawable.amap_start, R.drawable.amap_end);
             }
         });
         mEndAdapter.notifyDataSetChanged();
@@ -344,7 +344,7 @@ public class MainActivity extends AppCompatActivity
         gaodeLbsLayer.setLocationChangedListener(new ILbsLayer.CommoneLocationChangedListener() {
             @Override
             public void onLocationChanged(LocationInfo locationInfo) {
-
+                if (drivingByCar) return;
                 //客户端的位置、描点和上传个人位置信息，应该是一直进行的
                 //更新服务器中客户端位置信息
                 gaodeLbsLayer.addOrUpdataMarker(locationInfo,
@@ -356,10 +356,12 @@ public class MainActivity extends AppCompatActivity
 
             @Override
             public void onLocation(LocationInfo locationInfo) {
+
                 mCity.setText(locationInfo.getName());
                 mStartEdit.setText(gaodeLbsLayer.getCurrentDirection());
-                MainActivity.this.locationInfo = locationInfo;
+                myCurrentLocationInfo = locationInfo;
                 mStart = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());
+
                 //标记起点
                 gaodeLbsLayer.addStartMarker(mStart);
                 //获取附近的司机i朋友
@@ -485,14 +487,14 @@ public class MainActivity extends AppCompatActivity
         gaodeLbsLayer.clearAllMarkers();
 
         //添加定位标记
-        gaodeLbsLayer.addOrUpdataMarker(locationInfo, BitmapFactory.decodeResource(getResources(),
+        gaodeLbsLayer.addOrUpdataMarker(myCurrentLocationInfo, BitmapFactory.decodeResource(getResources(),
                 R.drawable.navi_map_gps_locked));
 
         //恢复地图的视野
         gaodeLbsLayer.moveCameraToPoint(mStart);
 
         //获取附近司机
-        getNearDrivers(locationInfo);
+        getNearDrivers(myCurrentLocationInfo);
 
         //隐藏操作栏
         optArea.setVisibility(View.GONE);
@@ -512,6 +514,7 @@ public class MainActivity extends AppCompatActivity
 
     /**
      * 功能：显示司机接单
+     *
      * @param order
      */
     @Override
@@ -539,21 +542,118 @@ public class MainActivity extends AppCompatActivity
 
                 mTips.setText(sb.toString());
 
-//                //显示司机的位置变化
-//                LocationInfo info = new LocationInfo(order.getDriverLatitude(), order.getDriverLongitude());
-//                info.setKey(order.getKey());
-//                showDriverLocationChanged(info);
-//                //添加乘客自己的位置marker
-//                gaodeLbsLayer.addMarker(mStart, R.drawable.navi_map_gps_locked, locationInfo.getKey());
             }
 
             @Override
             public void onDriverError(String err) {
 
             }
-        }, R.drawable.navi_map_gps_locked, R.drawable.amap_car);
+        }, R.drawable.amap_start, R.drawable.amap_car);
 
 
+    }
+
+    private boolean drivingByCar = false;
+
+    @Override
+    public void showDriverArriveStart(Order mOrder) {
+        String arriveTemp = getString(R.string.driver_arrive);
+        mTips.setText(String.format(arriveTemp,
+                mOrder.getDriverName(),
+                mOrder.getCarNo()));
+
+    }
+
+    @Override
+    public void showDriverStartDrive(Order mOrder) {
+        // 隐藏按钮
+        drivingByCar = true;
+        mBtnCancel.setVisibility(View.GONE);
+        mBtnCall.setVisibility(View.GONE);
+
+        String arriveTemp = getString(R.string.driver_arrive);
+        mTips.setText(String.format(arriveTemp,
+                mOrder.getDriverName(),
+                mOrder.getCarNo()));
+        LocationInfo info = new LocationInfo(mStart.latitude, mStart.longitude);
+        showDriverLocation2Update(info, mOrder);
+    }
+
+    @Override
+    public void showDriverArriveEnd(Order mOrder) {
+        drivingByCar = false;
+        String tipsTemp = getString(R.string.pay_info);
+        String tips = String.format(tipsTemp,
+                mOrder.getCost(),
+                mOrder.getDriverName(),
+                mOrder.getCarNo());
+        mTips.setText(tips);
+        mBtnPay.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * 功能：司机接到订单之后开往乘客的位置变化更新
+     *
+     * @param info
+     * @param mOrder
+     */
+    @Override
+    public void showDriverLocationUpdate(final LocationInfo info, final Order mOrder) {
+        gaodeLbsLayer.clearAllMarkers();
+        LatLonPoint end = new LatLonPoint(mStart.latitude, mStart.longitude);
+        final LatLonPoint car = new LatLonPoint(info.getLatitude(), info.getLongitude());
+        gaodeLbsLayer.drawDriverRoute(car, end, new ILbsLayer.DriverRouteCompliteListener() {
+            @Override
+            public void onDriverRouteComplite(RouteInfo routeInfo) {
+                //路线绘制完成
+                //地图聚焦到乘客和司机的视野
+                gaodeLbsLayer.moveCameraToPoint(new LatLng(info.getLatitude(), info.getLongitude()));
+                String tipsTemp = getString(R.string.accept_info);
+                mTips.setText(String.format(tipsTemp,
+                        mOrder.getDriverName(),
+                        mOrder.getCarNo(),
+                        routeInfo.getDistance(),
+                        routeInfo.getDuration()));
+            }
+
+            @Override
+            public void onDriverError(String err) {
+
+            }
+        }, R.drawable.amap_car, R.drawable.amap_start);
+    }
+
+    /**
+     * 功能：司机接到订单之后，开往目的地的位置变化更新
+     *
+     * @param info
+     * @param mOrder
+     */
+    @Override
+    public void showDriverLocation2Update(final LocationInfo info, final Order mOrder) {
+        gaodeLbsLayer.clearAllMarkers();
+        LatLonPoint end = new LatLonPoint(mEnd.latitude, mEnd.longitude);
+        LatLonPoint car = new LatLonPoint(info.getLatitude(), info.getLongitude());
+        gaodeLbsLayer.drawDriverRoute(car, end, new ILbsLayer.DriverRouteCompliteListener() {
+            @Override
+            public void onDriverRouteComplite(RouteInfo routeInfo) {
+                //路线绘制完成
+                //地图聚焦到乘客和司机的视野
+//                gaodeLbsLayer.moveCamera(new LatLng(info.getLatitude(), info.getLongitude()), mEnd);
+                gaodeLbsLayer.moveCameraToPoint(new LatLng(info.getLatitude(), info.getLongitude()));
+                String tipsTemp = getString(R.string.accept_info);
+                mTips.setText(String.format(tipsTemp,
+                        mOrder.getDriverName(),
+                        mOrder.getCarNo(),
+                        routeInfo.getDistance(),
+                        routeInfo.getDuration()));
+            }
+
+            @Override
+            public void onDriverError(String err) {
+
+            }
+        }, R.drawable.amap_car, R.drawable.amap_end);
     }
 
 

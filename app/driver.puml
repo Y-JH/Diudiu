@@ -1,0 +1,57 @@
+@startuml
+hide footbox
+actor 学术袁 as A #red
+database 后端服务 as B #green
+entity 有文化的司机 as C #orange
+
+activate A #red
+note over A : 完成登录
+A-[#red]>A : 定位起始位置，\n展示规划线路
+A-[#red]>B : 打车，呼叫司机
+deactivate A
+B-[#green]>C : 订单池中派发
+activate C #orange
+C-[#orange]>C : 提醒司机接单
+C-[#orange]>B : 接单
+deactivate C
+B-[#green]>A : 转发通知，\n司机已接单
+
+activate A #red
+A-[#red]>A : 更新已接单状态，\n展示乘客和司机间的距离路线
+note over of A : 等待司机到达乘车位置..
+note over of C : 接驾驾驶开始
+C-[#orange]>B : 行驶中..
+B-[#green]>A : 转发通知，\n司机定位行驶状态..
+A-[#red]>A : 更新乘客、司机定位状态
+...
+note over of C : 行驶到接驾地点
+C-[#orange]>B : 到达乘车位置
+B-[#green]>A : 转发通知，\n司机已到乘车位置
+A-[#red]>A : 提示乘客前往用车
+deactivate A
+
+activate C #orange
+C-[#orange]>B : 已接到乘客
+B-[#green]>A : 转发通知，即将启程
+activate A #red
+A-[#red]>A : 更新定位状态，\n展示前往目的地的线路
+
+note over of C : 前往目的地驾驶开始
+deactivate A
+C-[#orange]>B : 行驶中..
+B-[#green]>A : 转发通知，司机行驶状态..
+A-[#red]>A : 更新乘客距离目的地的定位状态
+...
+note over of C : 行驶到目的地
+C-[#orange]>B : 结束行程
+deactivate C
+B-[#green]>A : 转发通知，\n已到达目的地
+activate A #red
+A-[#red]>A : 提示支付
+note over of A:支付
+
+deactivate A
+
+
+
+@enduml

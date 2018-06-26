@@ -52,11 +52,30 @@ public class MainActivityPresenter implements IMainActivityPresenter {
     }
 
 
+    /**
+     * 功能：位置状态变化
+     * 1，未在订单状态下的司机位置变化
+     * 2，在订单状态下-已接单-前往乘客位置下的司机位置变化
+     * 3，在订单状态下-已到乘客位置并开始行车的位置变化
+     *
+     * @param info
+     */
     @RxbusCallback
     public void driverLocationChanged(LocationInfo info) {
-        iMainActivityView.showDriverLocationChanged(info);
+        if (null != mOrder && mOrder.getState() == OrderStateOptResponse.ORDER_STATE_ACCEPT) {
+            iMainActivityView.showDriverLocationUpdate(info, mOrder);
+        } else if (null != mOrder && mOrder.getState() == OrderStateOptResponse.ORDER_STATE_START_DRIVE) {
+            iMainActivityView.showDriverLocation2Update(info, mOrder);
+        } else {
+            iMainActivityView.showDriverLocationChanged(info);
+        }
     }
 
+    /**
+     * 功能：订单状态变化
+     *
+     * @param response
+     */
     @RxbusCallback
     public void callDriverResponse(OrderStateOptResponse response) {
         if (response.getState() == OrderStateOptResponse.ORDER_STATE_CREATE) {
@@ -69,14 +88,29 @@ public class MainActivityPresenter implements IMainActivityPresenter {
             }
         } else if (response.getState() == OrderStateOptResponse.ORDER_STATE_CANCEL) {
             //取消订单
+            mOrder = response.getData();
             if (response.getCode() == BaseBizResponse.STATE_OK) {
                 iMainActivityView.cancellSuc();
             } else {
                 iMainActivityView.cancellFail();
             }
-        } else if(response.getState() == OrderStateOptResponse.ORDER_STATE_ACCEPT){
+        } else if (response.getState() == OrderStateOptResponse.ORDER_STATE_ACCEPT) {
             //司机接单
-            iMainActivityView.showDriverAcceptOrder(response.getData());
+            mOrder = response.getData();
+            iMainActivityView.showDriverAcceptOrder(mOrder);
+        } else if (response.getState() == OrderStateOptResponse.ORDER_STATE_ARRIVE_START) {
+            //司机到达上车地点
+            mOrder = response.getData();
+            iMainActivityView.showDriverArriveStart(mOrder);
+        } else if (response.getState() == OrderStateOptResponse.ORDER_STATE_START_DRIVE) {
+            //开始进行行车
+            mOrder = response.getData();
+            iMainActivityView.showDriverStartDrive(mOrder);
+        } else if (response.getState() == OrderStateOptResponse.ORDER_STATE_ARRIVE_END) {
+            //司机到达目标终点
+            mOrder = response.getData();
+            iMainActivityView.showDriverArriveEnd(mOrder);
+
         }
     }
 

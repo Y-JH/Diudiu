@@ -43,4 +43,15 @@ public interface IMainActivityView {
 
     //显示司机接单
     void showDriverAcceptOrder(Order order);
+
+    //司机到达上车地点
+    void showDriverArriveStart(Order mOrder);
+    //开始进行行车
+    void showDriverStartDrive(Order mOrder);
+    //司机到达目标终点
+    void showDriverArriveEnd(Order mOrder);
+    //司机接到订单之后，开往乘客的位置变化更新
+    void showDriverLocationUpdate(LocationInfo infoCar, Order mOrder);
+    //司机接到订单之后，开往目的地的位置变化更新
+    void showDriverLocation2Update(LocationInfo infoCar, Order mOrder);
 }

@@ -34,15 +34,17 @@ public class PushReceiver extends BroadcastReceiver {
                 int type = jsonObject.optInt("type");
                 if (type == MSG_TYPE_LOCATION) {
                     // 位置变化
+
                     LocationInfo locationInfo =
                             new Gson().fromJson(jsonObject.optString("data"), LocationInfo.class);
                     RxBus.getInstance().send(locationInfo);
 
                 } else if(type == MSG_TYPE_ORDER){
-                    Order order = new Gson().fromJson(jsonObject.optString("data"), Order.class);
+                    //订单变化
 
+                    Order order = new Gson().fromJson(jsonObject.optString("data"), Order.class);
                     OrderStateOptResponse response = new OrderStateOptResponse();
-                    response.setState(OrderStateOptResponse.ORDER_STATE_ACCEPT);
+                    response.setState(order.getState());
                     response.setData(order);
                     response.setCode(response.STATE_OK);
 
