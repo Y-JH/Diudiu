@@ -30,9 +30,12 @@ public class RouteOverlay {
 	private Context mContext;
 	private Bitmap startBit, endBit, busBit, walkBit, driveBit;
 	protected boolean nodeIconVisible = true;
+	private int resStartMarker, resEndMarker;
 
-	public RouteOverlay(Context context) {
+	public RouteOverlay(Context context, int resStartMarker, int resEndMarker) {
 		mContext = context;
+		this.resStartMarker = resStartMarker;
+		this.resEndMarker = resEndMarker;
 	}
 
 	/**
@@ -84,7 +87,7 @@ public class RouteOverlay {
 	 * @since V2.1.0
 	 */
 	protected BitmapDescriptor getStartBitmapDescriptor() {
-		return BitmapDescriptorFactory.fromResource(R.drawable.amap_start);
+		return BitmapDescriptorFactory.fromResource(resStartMarker);
 	}
 	/**
 	 * 给终点Marker设置图标，并返回更换图标的图片。如不用默认图片，需要重写此方法。
@@ -92,7 +95,7 @@ public class RouteOverlay {
 	 * @since V2.1.0
 	 */
 	protected BitmapDescriptor getEndBitmapDescriptor() {
-		return BitmapDescriptorFactory.fromResource(R.drawable.amap_end);
+		return BitmapDescriptorFactory.fromResource(resEndMarker);
 	}
 	/**
 	 * 给公交Marker设置图标，并返回更换图标的图片。如不用默认图片，需要重写此方法。

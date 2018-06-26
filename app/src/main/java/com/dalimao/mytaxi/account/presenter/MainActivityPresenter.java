@@ -74,6 +74,9 @@ public class MainActivityPresenter implements IMainActivityPresenter {
             } else {
                 iMainActivityView.cancellFail();
             }
+        } else if(response.getState() == OrderStateOptResponse.ORDER_STATE_ACCEPT){
+            //司机接单
+            iMainActivityView.showDriverAcceptOrder(response.getData());
         }
     }
 

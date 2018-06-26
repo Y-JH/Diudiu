@@ -51,8 +51,10 @@ public class DrivingRouteOverLay extends RouteOverlay{
      * @param context   当前的activity对象。
      */
     public DrivingRouteOverLay(Context context, AMap amap, DrivePath path,
-                               LatLonPoint start, LatLonPoint end, List<LatLonPoint> throughPointList) {
-    	super(context);
+                               LatLonPoint start, LatLonPoint end,
+                               List<LatLonPoint> throughPointList,
+            int resStartMarker, int resEndMarker) {
+    	super(context,resStartMarker, resEndMarker);
     	mContext = context; 
         mAMap = amap; 
         this.drivePath = path;

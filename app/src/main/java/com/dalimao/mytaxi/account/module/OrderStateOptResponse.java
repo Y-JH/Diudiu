@@ -16,7 +16,8 @@ public class OrderStateOptResponse extends BaseBizResponse {
     public final static int ORDER_STATE_CREATE = 0;
     //取消订单
     public final static int ORDER_STATE_CANCEL = -1;
-    //
+    //司机接单
+    public final static int ORDER_STATE_ACCEPT = 1;
     private int state;
 
     private Order data;

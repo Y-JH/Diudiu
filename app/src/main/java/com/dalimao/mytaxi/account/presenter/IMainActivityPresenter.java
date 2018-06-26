@@ -35,4 +35,5 @@ public interface IMainActivityPresenter extends IEventBusSubscriber{
 
     //功能：取消呼叫订单
     void cancelCall();
+
 }

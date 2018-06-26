@@ -148,11 +148,15 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
         aMap.setMyLocationStyle(myLocationStyle);
     }
 
+    /**
+     * 功能：关键思路->打点，对已经打过的点移动功能。这个时候要判断那个marker是否是同一个。同一个点才能移动，否则又会在地图上打新的点。
+     * @param locationInfo
+     * @param bitmap
+     */
     @Override
     public void addOrUpdataMarker(LocationInfo locationInfo, Bitmap bitmap) {
         Marker marker = markerMap.get(locationInfo.getKey());
         LatLng latLng = new LatLng(locationInfo.getLatitude(), locationInfo.getLongitude());
-
         if (null != marker) {
             //如果标记marker存在 更新位置
             mCircle.setCenter(latLng);
@@ -298,14 +302,24 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
 
     @Override
     public void drawDriverRoute(LatLonPoint mStartPoint, LatLonPoint mEndPoint,
-                                final DriverRouteCompliteListener listener) {
+                                final DriverRouteCompliteListener listener,
+                                final int resStartMarker, final int resEndMarker) {
         //执行了驾车模式，这里回调
         mRouteSearch = new RouteSearch(mContext);
 
 
         final RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(mStartPoint, mEndPoint);
-        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(fromAndTo, RouteSearch.DRIVING_SINGLE_DEFAULT, null,
-                null, "");// 第一个参数表示路径规划的起点和终点，第二个参数表示驾车模式，第三个参数表示途经点，第四个参数表示避让区域，第五个参数表示避让道路
+        // 第一个参数表示路径规划的起点和终点，
+        // 第二个参数表示驾车模式，
+        // 第三个参数表示途经点，
+        // 第四个参数表示避让区域，
+        // 第五个参数表示避让道路
+        RouteSearch.DriveRouteQuery query = new RouteSearch.DriveRouteQuery(
+                fromAndTo,
+                RouteSearch.DRIVING_SINGLE_DEFAULT,
+                null,
+                null,
+                "");
         mRouteSearch.setRouteSearchListener(new RouteSearch.OnRouteSearchListener() {
             @Override
             public void onBusRouteSearched(BusRouteResult busRouteResult, int errorCode) {
@@ -313,23 +327,30 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
             }
 
             @Override
-            public void onDriveRouteSearched(DriveRouteResult driveRouteResult, int errorCode) {
+            public void onDriveRouteSearched(DriveRouteResult driveRouteResult,
+                                             int errorCode) {
                 aMap.clear();// 清理地图上的所有覆盖物
                 if (errorCode == AMapException.CODE_AMAP_SUCCESS) {
                     if (driveRouteResult != null && driveRouteResult.getPaths() != null) {
                         if (driveRouteResult.getPaths().size() > 0) {
                             mDriveRouteResult = driveRouteResult;
+                            //获取第一条路径
                             final DrivePath drivePath = mDriveRouteResult.getPaths()
                                     .get(0);
+
+                            //绘制及绘制属性设置
                             DrivingRouteOverLay drivingRouteOverlay = new DrivingRouteOverLay(
                                     mContext, aMap, drivePath,
                                     mDriveRouteResult.getStartPos(),
-                                    mDriveRouteResult.getTargetPos(), null);
+                                    mDriveRouteResult.getTargetPos(),
+                                    null,resStartMarker, resEndMarker);
                             drivingRouteOverlay.setNodeIconVisibility(false);//设置节点marker是否显示
                             drivingRouteOverlay.setIsColorfulline(true);//是否用颜色展示交通拥堵情况，默认true
                             drivingRouteOverlay.removeFromMap();
                             drivingRouteOverlay.addToMap();
                             drivingRouteOverlay.zoomToSpan();
+
+
 
                             int dis = (int) drivePath.getDistance();
                             int dur = (int) drivePath.getDuration();
@@ -488,8 +509,8 @@ public class GaodeLbsLayerImpl implements ILbsLayer, LocationSource, AMapLocatio
     //清除地图上的所有标记
     @Override
     public void clearAllMarkers() {
-        markerMap.clear();
         aMap.clear();// 清理地图上的所有覆盖物
+        markerMap.clear();
     }
 
     //恢复视野

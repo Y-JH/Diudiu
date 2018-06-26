@@ -2,6 +2,7 @@ package com.dalimao.mytaxi.main;
 
 import com.dalimao.mytaxi.account.module.NearDriverResponse;
 import com.dalimao.mytaxi.lbs.LocationInfo;
+import com.dalimao.mytaxi.lbs.Order;
 
 /**
  * @Title:IMainActivityView
@@ -39,4 +40,7 @@ public interface IMainActivityView {
     void cancellSuc();
     //取消失败
     void cancellFail();
+
+    //显示司机接单
+    void showDriverAcceptOrder(Order order);
 }

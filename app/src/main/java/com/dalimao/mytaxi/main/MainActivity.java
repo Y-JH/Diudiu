@@ -17,6 +17,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.amap.api.maps2d.model.LatLng;
+import com.amap.api.services.core.LatLonPoint;
 import com.dalimao.mytaxi.MyTaxiApplication;
 import com.dalimao.mytaxi.R;
 import com.dalimao.mytaxi.account.module.AccountManagerImpl;
@@ -37,6 +38,7 @@ import com.dalimao.mytaxi.lbs.GaodeLbsLayerImpl;
 import com.dalimao.mytaxi.lbs.ILbsLayer;
 import com.dalimao.mytaxi.lbs.ITextWatcher;
 import com.dalimao.mytaxi.lbs.LocationInfo;
+import com.dalimao.mytaxi.lbs.Order;
 import com.dalimao.mytaxi.lbs.PoiAdapter;
 import com.dalimao.mytaxi.lbs.PoiListAdapter;
 import com.dalimao.mytaxi.lbs.RouteInfo;
@@ -288,7 +290,9 @@ public class MainActivity extends AppCompatActivity
                 //标记终点
                 mEnd = new LatLng(info.getLatitude(), info.getLongitude());
                 gaodeLbsLayer.addEndMarker(mEnd);
-                gaodeLbsLayer.drawDriverRoute(AMapUtil.convertToLatLonPoint(mStart), AMapUtil.convertToLatLonPoint(mEnd), new ILbsLayer.DriverRouteCompliteListener() {
+                gaodeLbsLayer.drawDriverRoute(AMapUtil.convertToLatLonPoint(mStart),
+                        AMapUtil.convertToLatLonPoint(mEnd),
+                        new ILbsLayer.DriverRouteCompliteListener() {
                     @Override
                     public void onDriverRouteComplite(RouteInfo routeInfo) {
                         ToastUtil.show(MainActivity.this, routeInfo.getTaxiCost() + "<-");
@@ -312,7 +316,7 @@ public class MainActivity extends AppCompatActivity
                     public void onDriverError(String err) {
 
                     }
-                });
+                }, R.drawable.amap_start, R.drawable.amap_end);
             }
         });
         mEndAdapter.notifyDataSetChanged();
@@ -504,6 +508,52 @@ public class MainActivity extends AppCompatActivity
     public void cancellFail() {
         ToastUtil.show(this, "取消订单失败");
         mBtnCancel.setEnabled(true);
+    }
+
+    /**
+     * 功能：显示司机接单
+     * @param order
+     */
+    @Override
+    public void showDriverAcceptOrder(final Order order) {
+        gaodeLbsLayer.clearAllMarkers();
+
+        //显示绘制的司机到乘客的路径
+        LatLonPoint startPoint = new LatLonPoint(mStart.latitude, mStart.longitude);
+        LatLonPoint endPoint = new LatLonPoint(order.getDriverLatitude(), order.getDriverLongitude());
+        gaodeLbsLayer.drawDriverRoute(startPoint, endPoint, new ILbsLayer.DriverRouteCompliteListener() {
+            @Override
+            public void onDriverRouteComplite(RouteInfo routeInfo) {
+                //路线绘制完成
+                //地图聚焦到乘客和司机的视野
+                gaodeLbsLayer.moveCamera(mStart, new LatLng(order.getDriverLatitude(), order.getDriverLongitude()));
+                //显示司机、路径信息
+                StringBuffer sb = new StringBuffer();
+                sb.append("司机：")
+                        .append(order.getDriverName())
+                        .append(", 车牌号：")
+                        .append(order.getCarNo())
+                        .append(", 预计")
+                        .append(routeInfo.getDuration())
+                        .append("分钟后到达");
+
+                mTips.setText(sb.toString());
+
+//                //显示司机的位置变化
+//                LocationInfo info = new LocationInfo(order.getDriverLatitude(), order.getDriverLongitude());
+//                info.setKey(order.getKey());
+//                showDriverLocationChanged(info);
+//                //添加乘客自己的位置marker
+//                gaodeLbsLayer.addMarker(mStart, R.drawable.navi_map_gps_locked, locationInfo.getKey());
+            }
+
+            @Override
+            public void onDriverError(String err) {
+
+            }
+        }, R.drawable.navi_map_gps_locked, R.drawable.amap_car);
+
+
     }
 
 

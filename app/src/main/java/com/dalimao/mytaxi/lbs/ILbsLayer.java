@@ -46,7 +46,10 @@ public interface ILbsLayer {
     void addStartMarker(LatLng mStartPoint);//添加起点位置标记
     void addEndMarker(LatLng mEndPoint);//添加终点位置标记
     void addMarker(LatLng latLng, int res, String key);
-    void drawDriverRoute(LatLonPoint mStartPoint, LatLonPoint mEndPoint, DriverRouteCompliteListener driverRouteCompliteListener);//绘制驾车路线
+    void drawDriverRoute(LatLonPoint mStartPoint,
+                         LatLonPoint mEndPoint,
+                         DriverRouteCompliteListener driverRouteCompliteListener,
+            int resStartMarker, int resEndMarker);//绘制驾车路线
     //移动相机，通过围栏方式把起点和终点展现在视野范围
     void moveCamera(LatLng mStart, LatLng mEnd);
 
